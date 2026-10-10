@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Thermoelectric Water Kiosk - Live Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-950 text-cyan-50 font-sans leading-relaxed selection:bg-cyan-500 selection:text-slate-950">
+
+    <!-- Sticky Header with Mobile Toggle -->
+    <header class="bg-slate-900/95 backdrop-blur-md border-b border-cyan-900/50 shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3.5 flex justify-between items-center">
+            <h1 class="text-base sm:text-lg font-bold tracking-wide text-cyan-400 flex items-center gap-2 truncate">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+                <span class="truncate">Live Telemetry</span>
+            </h1>
+
+            <!-- Desktop Nav Links -->
+            <div class="hidden md:flex items-center gap-4">
+                <a href="index.html" class="text-xs bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/50 px-3.5 py-2 rounded-lg transition font-medium">← Home</a>
+                <a href="admin.html" class="text-xs text-slate-400 hover:text-cyan-300 transition font-medium">Admin Portal</a>
+                <div class="flex items-center space-x-1.5 bg-cyan-950/60 border border-cyan-800/50 px-3 py-1.5 rounded-full">
+                    <span class="inline-block w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
+                    <span class="text-[11px] text-cyan-200">Online</span>
+                </div>
+            </div>
+
+            <!-- Mobile Hamburger Button -->
+            <button onclick="toggleMobileMenu()" class="md:hidden text-cyan-400 hover:text-cyan-200 p-1.5 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Mobile Dropdown Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-slate-900 border-b border-cyan-900/60 px-4 pt-2 pb-4 space-y-2.5">
+            <div class="flex items-center justify-between py-1 border-b border-slate-800 text-xs text-cyan-300">
+                <span>System Status</span>
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span> Online</span>
+            </div>
+            <a href="index.html" class="block w-full text-center bg-cyan-950 hover:bg-cyan-900 text-cyan-200 border border-cyan-700/50 py-2.5 rounded-lg text-xs font-semibold transition">← Back to Home</a>
+            <a href="admin.html" class="block w-full text-center bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 py-2.5 rounded-lg text-xs font-semibold transition">Admin Portal</a>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Container -->
+    <main class="max-w-7xl mx-auto px-4 py-6 sm:py-8 space-y-6 sm:space-y-8">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-900 border border-cyan-900/40 rounded-xl p-5 sm:p-6 shadow-lg">
+            <div>
+                <h2 class="text-lg sm:text-xl font-bold text-cyan-200">Station Telemetry & Analytics</h2>
+                <p class="text-xs text-cyan-400/80 mt-1">Real-time sensor metrics streamed directly from the ESP32 edge server.</p>
+            </div>
+            <div class="bg-teal-950/60 border border-teal-800/50 px-3 py-1.5 rounded-lg text-xs text-teal-300 font-medium">
+                Status: Operating Normally
+            </div>
+        </div>
+
+        <!-- Real-Time Telemetry Cards -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div class="bg-gradient-to-br from-slate-900 to-cyan-950/40 border border-cyan-800/40 rounded-xl p-5 shadow-lg">
+                <p class="text-xs text-cyan-300 uppercase tracking-wider font-semibold">Reservoir Water Temp</p>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span id="water-temp" class="text-2xl sm:text-3xl font-extrabold text-cyan-300">15.2 °C</span>
+                    <span class="text-xs text-cyan-400/80">Target: 15.0°C</span>
+                </div>
+            </div>
+            <div class="bg-gradient-to-br from-slate-900 to-cyan-950/40 border border-cyan-800/40 rounded-xl p-5 shadow-lg">
+                <p class="text-xs text-cyan-300 uppercase tracking-wider font-semibold">Ambient Temp</p>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span id="ambient-temp" class="text-2xl sm:text-3xl font-extrabold text-sky-300">34.8 °C</span>
+                    <span class="text-xs text-cyan-400/80">Heat Sink: <span id="heatsink-temp">42.1°C</span></span>
+                </div>
+            </div>
+            <div class="bg-gradient-to-br from-slate-900 to-cyan-950/40 border border-cyan-800/40 rounded-xl p-5 shadow-lg">
+                <p class="text-xs text-cyan-300 uppercase tracking-wider font-semibold">Battery / Solar Status</p>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span id="battery-voltage" class="text-2xl sm:text-3xl font-extrabold text-teal-300">12.6 V</span>
+                    <span class="text-xs text-teal-400 font-semibold">Charging</span>
+                </div>
+            </div>
+            <div class="bg-gradient-to-br from-slate-900 to-cyan-950/40 border border-cyan-800/40 rounded-xl p-5 shadow-lg">
+                <p class="text-xs text-cyan-300 uppercase tracking-wider font-semibold">Water Tank Level</p>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span id="water-level" class="text-2xl sm:text-3xl font-extrabold text-blue-400">85%</span>
+                    <span class="text-xs text-cyan-400/80">Solenoid: <span class="text-teal-400">Ready</span></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-slate-900 border border-cyan-900/40 rounded-xl p-4 sm:p-6 shadow-lg">
+                <h3 class="text-base sm:text-lg font-semibold text-cyan-200 mb-4">Cooling Performance (Temperature Trends)</h3>
+                <div class="relative h-56 sm:h-64"><canvas id="tempChart"></canvas></div>
+            </div>
+            <div class="bg-slate-900 border border-cyan-900/40 rounded-xl p-4 sm:p-6 shadow-lg">
+                <h3 class="text-base sm:text-lg font-semibold text-cyan-200 mb-4">Energy Utilization (Watt-Hours)</h3>
+                <div class="relative h-56 sm:h-64"><canvas id="powerChart"></canvas></div>
+            </div>
+        </section>
+
+        <!-- RFID Transaction Logs -->
+        <section class="bg-slate-900 border border-cyan-900/40 rounded-xl p-4 sm:p-6 shadow-lg">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                <h3 class="text-base sm:text-lg font-semibold text-cyan-200">Recent RFID Transaction Logs</h3>
+                <button onclick="refreshData()" class="text-xs bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/50 px-3.5 py-2 rounded-lg transition w-full sm:w-auto">Refresh Logs</button>
+            </div>
+            <div class="overflow-x-auto -mx-4 sm:mx-0">
+                <div class="inline-block min-w-full align-middle px-4 sm:px-0">
+                    <table class="w-full text-left border-collapse min-w-[500px]">
+                        <thead>
+                            <tr class="border-b border-cyan-900/50 text-cyan-400 text-[11px] sm:text-xs uppercase">
+                                <th class="py-3 px-3 sm:px-4">Timestamp</th>
+                                <th class="py-3 px-3 sm:px-4">User UID</th>
+                                <th class="py-3 px-3 sm:px-4">Volume</th>
+                                <th class="py-3 px-3 sm:px-4">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTableBody" class="text-xs sm:text-sm divide-y divide-cyan-950">
+                            <tr>
+                                <td class="py-3 px-3 sm:px-4 text-cyan-100">2026-10-10 14:22:05</td>
+                                <td class="py-3 px-3 sm:px-4 font-mono text-cyan-400">UID: 3A-8F-92-1C</td>
+                                <td class="py-3 px-3 sm:px-4">500 mL</td>
+                                <td class="py-3 px-3 sm:px-4"><span class="bg-teal-950 text-teal-300 border border-teal-800 text-[11px] px-2.5 py-1 rounded-full font-medium">Approved</span></td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-3 sm:px-4 text-cyan-100">2026-10-10 14:15:40</td>
+                                <td class="py-3 px-3 sm:px-4 font-mono text-cyan-400">UID: 7C-2B-44-8E</td>
+                                <td class="py-3 px-3 sm:px-4">0 mL</td>
+                                <td class="py-3 px-3 sm:px-4"><span class="bg-sky-950 text-sky-300 border border-sky-800 text-[11px] px-2.5 py-1 rounded-full font-medium">Cooldown Active</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto px-4 py-8 text-center border-t border-slate-900 mt-12">
+        <p class="text-[11px] sm:text-xs text-slate-500">PUP Computer Engineering Thesis Project • Solar Thermoelectric Water-Cooling & RFID Resource Management</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function fetchTelemetry() {
+            fetch('/api/telemetry')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('water-temp').innerText = data.waterTemp + ' °C';
+                    document.getElementById('ambient-temp').innerText = data.ambientTemp + ' °C';
+                    document.getElementById('heatsink-temp').innerText = data.heatSinkTemp + ' °C';
+                    document.getElementById('battery-voltage').innerText = data.batteryVoltage + ' V';
+                    document.getElementById('water-level').innerText = data.waterLevel + '%';
+                })
+                .catch(error => console.log('Local LAN connection standby...'));
+        }
+        setInterval(fetchTelemetry, 3000);
+
+        function refreshData() {
+            fetch('/api/logs')
+                .then(response => response.json())
+                .then(logs => {
+                    const tableBody = document.getElementById('logTableBody');
+                    tableBody.innerHTML = '';
+                    logs.forEach(log => {
+                        const row = `
+                            <tr>
+                                <td class="py-3 px-3 sm:px-4 text-cyan-100">${log.timestamp}</td>
+                                <td class="py-3 px-3 sm:px-4 font-mono text-cyan-400">${log.uid}</td>
+                                <td class="py-3 px-3 sm:px-4">${log.volume} mL</td>
+                                <td class="py-3 px-3 sm:px-4"><span class="bg-teal-950 text-teal-300 border border-teal-800 text-[11px] px-2.5 py-1 rounded-full font-medium">${log.status}</span></td>
+                            </tr>
+                        `;
+                        tableBody.innerHTML += row;
+                    });
+                })
+                .catch(error => alert('Unable to sync logs from local ESP32 database.'));
+        }
+
+        const ctxTemp = document.getElementById('tempChart').getContext('2d');
+        new Chart(ctxTemp, {
+            type: 'line',
+            data: {
+                labels: ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
+                datasets: [{
+                    label: 'Reservoir Temp (°C)',
+                    data: [16.5, 15.8, 15.1, 15.0, 14.9, 15.2],
+                    borderColor: '#06b6d4',
+                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                    borderWidth: 2.5,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    y: { grid: { color: '#164e6355' }, ticks: { color: '#a5f3fc' } },
+                    x: { grid: { color: '#164e6355' }, ticks: { color: '#a5f3fc' } }
+                },
+                plugins: { legend: { labels: { color: '#ecfeff' } } }
+            }
+        });
+
+        const ctxPower = document.getElementById('powerChart').getContext('2d');
+        new Chart(ctxPower, {
+            type: 'bar',
+            data: {
+                labels: ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
+                datasets: [{
+                    label: 'Power Consumption (Wh)',
+                    data: [42, 48, 55, 52, 45, 40],
+                    backgroundColor: '#0ea5e9',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    y: { grid: { color: '#164e6355' }, ticks: { color: '#a5f3fc' } },
+                    x: { grid: { color: '#164e6355' }, ticks: { color: '#a5f3fc' } }
+                },
+                plugins: { legend: { labels: { color: '#ecfeff' } } }
+            }
+        });
+    </script>
+</body>
+</html>

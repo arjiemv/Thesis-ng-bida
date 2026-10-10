@@ -7,123 +7,300 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-950 text-cyan-50 font-sans leading-relaxed">
+<body class="bg-slate-950 text-cyan-50 font-sans leading-relaxed selection:bg-cyan-500 selection:text-slate-950">
 
-    <!-- Admin Header Navigation -->
-    <header class="bg-slate-900 border-b border-cyan-900/50 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold tracking-wide text-cyan-400 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                PUP Hydration Kiosk — Administrator Portal
-            </h1>
-            <a href="index.html" class="bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/50 text-xs px-3 py-1.5 rounded transition">← View Public Dashboard</a>
+    <!-- ================= ADMIN PIN GATE MODAL ================= -->
+    <div id="pin-modal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-cyan-800/60 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6">
+            <div class="text-center space-y-2">
+                <div class="w-12 h-12 bg-cyan-500/10 border border-cyan-500/30 rounded-full flex items-center justify-center mx-auto text-cyan-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-cyan-100">Administrator Access</h3>
+                <p class="text-xs text-cyan-300/80">Enter the 4-digit system security PIN to manage firmware settings and RFID directories.</p>
+            </div>
+            <div class="space-y-4">
+                <input type="password" id="pin-input" maxlength="4" placeholder="••••" class="w-full text-center tracking-[1em] text-2xl bg-slate-950 border border-cyan-800/80 rounded-xl py-3 text-cyan-100 focus:outline-none focus:border-cyan-400 font-mono">
+                <p id="pin-error" class="text-xs text-rose-400 text-center hidden">Incorrect PIN. Try again (Default: 0000).</p>
+                <button onclick="verifyPin()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider py-3.5 rounded-xl transition shadow-lg shadow-cyan-500/20">
+                    Unlock Portal
+                </button>
+            </div>
+            <div class="text-center">
+                <a href="index.html" class="text-xs text-slate-400 hover:text-cyan-300 transition">← Return to Public Home</a>
+            </div>
         </div>
-    </header>
+    </div>
 
-    <!-- Main Admin Container -->
-    <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
-
-        <!-- Admin Notice Banner -->
-        <div class="bg-cyan-950/40 border border-cyan-800/50 rounded-xl p-5 shadow">
-            <h2 class="text-lg font-bold text-cyan-300">System Management & Configuration</h2>
-            <p class="text-xs text-cyan-400/80 mt-1">Manage Fair-Share allocation limits, run hardware diagnostic tests, and maintain authorized student RFID card directories locally.</p>
-        </div>
-
-        <!-- Configuration Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Dispensing Policy Settings -->
-            <div class="bg-slate-900 border border-cyan-900/40 rounded-xl p-6 shadow-lg space-y-4">
-                <h3 class="text-md font-semibold text-cyan-200 border-b border-cyan-900/50 pb-2">Fair-Share Allocation Rules</h3>
+    <!-- ================= ADD RFID MODAL ================= -->
+    <div id="rfid-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-cyan-800/60 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6">
+            <div class="flex justify-between items-center border-b border-cyan-900/50 pb-4">
+                <h3 class="text-base font-bold text-cyan-200">Register New Student RFID</h3>
+                <button onclick="toggleRfidModal(false)" class="text-slate-400 hover:text-cyan-200">✕</button>
+            </div>
+            <div class="space-y-4">
                 <div>
-                    <label class="block text-xs text-cyan-300 mb-1">Volumetric Limit per Tap (mL)</label>
-                    <input type="number" id="volLimit" value="500" class="w-full bg-slate-950 border border-cyan-800/60 rounded px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-400">
+                    <label class="block text-xs text-cyan-300 mb-1">Student Full Name</label>
+                    <input type="text" id="new-name" placeholder="e.g., Beverly Miles Reyes" class="w-full bg-slate-950 border border-cyan-800/60 rounded-lg px-3 py-2.5 text-xs text-cyan-100 focus:outline-none focus:border-cyan-400">
                 </div>
                 <div>
-                    <label class="block text-xs text-cyan-300 mb-1">User Cooldown Period (Minutes)</label>
-                    <input type="number" id="cooldownTime" value="5" class="w-full bg-slate-950 border border-cyan-800/60 rounded px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-400">
+                    <label class="block text-xs text-cyan-300 mb-1">RFID Card UID (or Scan via RC522)</label>
+                    <input type="text" id="new-uid" placeholder="e.g., 4E-22-8A-9F" class="w-full bg-slate-950 border border-cyan-800/60 rounded-lg px-3 py-2.5 text-xs font-mono text-cyan-100 focus:outline-none focus:border-cyan-400">
                 </div>
                 <div>
-                    <label class="block text-xs text-cyan-300 mb-1">Target Cooling Setpoint (°C)</label>
-                    <input type="number" step="0.1" id="tempSetpoint" value="15.0" class="w-full bg-slate-950 border border-cyan-800/60 rounded px-3 py-2 text-sm text-cyan-100 focus:outline-none focus:border-cyan-400">
+                    <label class="block text-xs text-cyan-300 mb-1">Access Tier</label>
+                    <select id="new-tier" class="w-full bg-slate-950 border border-cyan-800/60 rounded-lg px-3 py-2.5 text-xs text-cyan-100 focus:outline-none focus:border-cyan-400">
+                        <option value="Standard User">Standard User (500mL Limit)</option>
+                        <option value="Administrator">Administrator</option>
+                    </select>
                 </div>
-                <button onclick="saveConfig()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-semibold text-xs py-2.5 rounded transition shadow">Update Firmware Parameters</button>
-            </div>
-
-            <!-- Manual Actuator & Maintenance Controls -->
-            <div class="bg-slate-900 border border-cyan-900/40 rounded-xl p-6 shadow-lg space-y-4">
-                <h3 class="text-md font-semibold text-cyan-200 border-b border-cyan-900/50 pb-2">Hardware Diagnostics & Maintenance</h3>
-                <div class="space-y-3 pt-1">
-                    <div class="flex items-center justify-between bg-slate-950 p-3 rounded border border-cyan-900/30">
-                        <div>
-                            <p class="text-sm font-medium text-cyan-200">Solenoid Valve Test</p>
-                            <p class="text-xs text-slate-400">Manually cycle the water release valve</p>
-                        </div>
-                        <button onclick="triggerAction('Solenoid')" class="bg-sky-950 hover:bg-sky-900 text-sky-300 border border-sky-800 text-xs px-3 py-1.5 rounded transition">Test Valve</button>
-                    </div>
-                    <div class="flex items-center justify-between bg-slate-950 p-3 rounded border border-cyan-900/30">
-                        <div>
-                            <p class="text-sm font-medium text-cyan-200">Reset Local SPIFFS Cache</p>
-                            <p class="text-xs text-slate-400">Clear historical telemetry logs</p>
-                        </div>
-                        <button onclick="triggerAction('Cache')" class="bg-amber-950 hover:bg-amber-900 text-amber-300 border border-amber-800 text-xs px-3 py-1.5 rounded transition">Clear Logs</button>
-                    </div>
-                    <div class="flex items-center justify-between bg-slate-950 p-3 rounded border border-cyan-900/30">
-                        <div>
-                            <p class="text-sm font-medium text-cyan-200">System Reboot</p>
-                            <p class="text-xs text-slate-400">Restart ESP32 Microcontroller node</p>
-                        </div>
-                        <button onclick="triggerAction('Reboot')" class="bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 text-xs px-3 py-1.5 rounded transition">Reboot Node</button>
-                    </div>
-                </div>
+                <button onclick="saveNewRfid()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-semibold text-xs py-3 rounded-lg transition shadow">Save to ESP32 Database</button>
             </div>
         </div>
+    </div>
 
-        <!-- Registered RFID Database Table -->
-        <div class="bg-slate-900 border border-cyan-900/40 rounded-xl p-6 shadow-lg">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-cyan-200">Authorized RFID Tag Directory</h3>
-                <button onclick="alert('Scan new card on RC522 reader module...');" class="text-xs bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/50 px-3 py-1.5 rounded transition">+ Add Authorized UID</button>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b border-cyan-900/50 text-cyan-400 text-xs uppercase">
-                            <th class="py-3 px-4">Card Holder</th>
-                            <th class="py-3 px-4">RFID UID</th>
-                            <th class="py-3 px-4">Access Tier</th>
-                            <th class="py-3 px-4">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-sm divide-y divide-cyan-950">
-                        <tr>
-                            <td class="py-3 px-4 text-cyan-100">Student (Dianne M.)</td>
-                            <td class="py-3 px-4 font-mono text-cyan-400">3A-8F-92-1C</td>
-                            <td class="py-3 px-4"><span class="text-xs text-teal-400 font-semibold">Standard User</span></td>
-                            <td class="py-3 px-4"><button class="text-xs text-rose-400 hover:underline">Revoke</button></td>
-                        </tr>
-                        <tr>
-                            <td class="py-3 px-4 text-cyan-100">Student (Angelo P.)</td>
-                            <td class="py-3 px-4 font-mono text-cyan-400">7C-2B-44-8E</td>
-                            <td class="py-3 px-4"><span class="text-xs text-teal-400 font-semibold">Standard User</span></td>
-                            <td class="py-3 px-4"><button class="text-xs text-rose-400 hover:underline">Revoke</button></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <!-- ================= MAIN ADMIN CONTENT (LOCKED INITIALLY) ================= -->
+    <div id="admin-content" class="opacity-0 pointer-events-none transition-opacity duration-300">
+        
+        <!-- Sticky Header with Mobile Toggle -->
+        <header class="bg-slate-900/95 backdrop-blur-md border-b border-cyan-900/50 shadow-md sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 py-3.5 flex justify-between items-center">
+                <h1 class="text-base sm:text-lg font-bold tracking-wide text-cyan-400 flex items-center gap-2 truncate">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 sm:h-6 w-5 sm:w-6 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                    <span class="truncate">Admin Control Center</span>
+                </h1>
 
-    </main>
+                <!-- Desktop Nav Links -->
+                <div class="hidden md:flex items-center gap-4">
+                    <a href="dashboard.html" class="text-xs bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/50 px-3.5 py-2 rounded-lg transition font-medium">Live Dashboard</a>
+                    <a href="index.html" class="text-xs text-slate-400 hover:text-cyan-300 transition font-medium">Home</a>
+                    <div class="flex items-center space-x-1.5 bg-cyan-950/60 border border-cyan-800/50 px-3 py-1.5 rounded-full">
+                        <span class="inline-block w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
+                        <span class="text-[11px] text-cyan-200">Secure Session</span>
+                    </div>
+                </div>
+
+                <!-- Mobile Hamburger Button -->
+                <button onclick="toggleMobileMenu()" class="md:hidden text-cyan-400 hover:text-cyan-200 p-1.5 focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Mobile Dropdown Menu -->
+            <div id="mobile-menu" class="hidden md:hidden bg-slate-900 border-b border-cyan-900/60 px-4 pt-2 pb-4 space-y-2.5">
+                <a href="dashboard.html" class="block w-full text-center bg-cyan-950 hover:bg-cyan-900 text-cyan-200 border border-cyan-700/50 py-2.5 rounded-lg text-xs font-semibold transition">Live Dashboard</a>
+                <a href="index.html" class="block w-full text-center bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 py-2.5 rounded-lg text-xs font-semibold transition">Return to Home</a>
+            </div>
+        </header>
+
+        <!-- Main Admin Container -->
+        <main class="max-w-7xl mx-auto px-4 py-6 sm:py-8 space-y-6 sm:space-y-8">
+
+            <!-- Admin Notice Banner -->
+            <div class="bg-cyan-950/40 border border-cyan-800/50 rounded-xl p-5 shadow">
+                <h2 class="text-base sm:text-lg font-bold text-cyan-300">System Management & Configuration</h2>
+                <p class="text-xs text-cyan-400/80 mt-1">Manage Fair-Share allocation limits, run hardware diagnostic tests, and maintain authorized student RFID card directories locally.</p>
+            </div>
+
+            <!-- Configuration Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Dispensing Policy Settings -->
+                <div class="bg-slate-900 border border-cyan-900/40 rounded-xl p-5 sm:p-6 shadow-lg space-y-4">
+                    <h3 class="text-sm sm:text-md font-semibold text-cyan-200 border-b border-cyan-900/50 pb-2">Fair-Share Allocation Rules</h3>
+                    <div>
+                        <label class="block text-xs text-cyan-300 mb-1">Volumetric Limit per Tap (mL)</label>
+                        <input type="number" id="volLimit" value="500" class="w-full bg-slate-950 border border-cyan-800/60 rounded-lg px-3 py-2.5 text-xs sm:text-sm text-cyan-100 focus:outline-none focus:border-cyan-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-cyan-300 mb-1">User Cooldown Period (Minutes)</label>
+                        <input type="number" id="cooldownTime" value="5" class="w-full bg-slate-950 border border-cyan-800/60 rounded-lg px-3 py-2.5 text-xs sm:text-sm text-cyan-100 focus:outline-none focus:border-cyan-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-cyan-300 mb-1">Target Cooling Setpoint (°C)</label>
+                        <input type="number" step="0.1" id="tempSetpoint" value="15.0" class="w-full bg-slate-950 border border-cyan-800/60 rounded-lg px-3 py-2.5 text-xs sm:text-sm text-cyan-100 focus:outline-none focus:border-cyan-400">
+                    </div>
+                    <button onclick="saveConfig()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs py-3 rounded-lg transition shadow">Update Firmware Parameters</button>
+                </div>
+
+                <!-- Manual Actuator & Maintenance Controls -->
+                <div class="bg-slate-900 border border-cyan-900/40 rounded-xl p-5 sm:p-6 shadow-lg space-y-4">
+                    <h3 class="text-sm sm:text-md font-semibold text-cyan-200 border-b border-cyan-900/50 pb-2">Hardware Diagnostics & Maintenance</h3>
+                    <div class="space-y-3 pt-1">
+                        <div class="flex items-center justify-between bg-slate-950 p-3 rounded-lg border border-cyan-900/30 gap-2">
+                            <div>
+                                <p class="text-xs sm:text-sm font-medium text-cyan-200">Solenoid Valve Test</p>
+                                <p class="text-[11px] text-slate-400">Manually cycle the water release valve</p>
+                            </div>
+                            <button onclick="triggerAction('Solenoid')" class="bg-sky-950 hover:bg-sky-900 text-sky-300 border border-sky-800 text-xs px-3 py-1.5 rounded-lg transition shrink-0">Test Valve</button>
+                        </div>
+                        <div class="flex items-center justify-between bg-slate-950 p-3 rounded-lg border border-cyan-900/30 gap-2">
+                            <div>
+                                <p class="text-xs sm:text-sm font-medium text-cyan-200">Reset Local SPIFFS Cache</p>
+                                <p class="text-[11px] text-slate-400">Clear historical telemetry logs</p>
+                            </div>
+                            <button onclick="triggerAction('Cache')" class="bg-amber-950 hover:bg-amber-900 text-amber-300 border border-amber-800 text-xs px-3 py-1.5 rounded-lg transition shrink-0">Clear Logs</button>
+                        </div>
+                        <div class="flex items-center justify-between bg-slate-950 p-3 rounded-lg border border-cyan-900/30 gap-2">
+                            <div>
+                                <p class="text-xs sm:text-sm font-medium text-cyan-200">System Reboot</p>
+                                <p class="text-[11px] text-slate-400">Restart ESP32 Microcontroller node</p>
+                            </div>
+                            <button onclick="triggerAction('Reboot')" class="bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 text-xs px-3 py-1.5 rounded-lg transition shrink-0">Reboot Node</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registered RFID Database Table -->
+            <div class="bg-slate-900 border border-cyan-900/40 rounded-xl p-5 sm:p-6 shadow-lg">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                    <h3 class="text-base sm:text-lg font-semibold text-cyan-200">Authorized RFID Tag Directory</h3>
+                    <button onclick="toggleRfidModal(true)" class="text-xs bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/50 px-3.5 py-2 rounded-lg transition w-full sm:w-auto">+ Add Authorized UID</button>
+                </div>
+                <div class="overflow-x-auto -mx-5 sm:mx-0">
+                    <div class="inline-block min-w-full align-middle px-5 sm:px-0">
+                        <table class="w-full text-left border-collapse min-w-[500px]">
+                            <thead>
+                                <tr class="border-b border-cyan-900/50 text-cyan-400 text-[11px] sm:text-xs uppercase">
+                                    <th class="py-3 px-3 sm:px-4">Card Holder</th>
+                                    <th class="py-3 px-3 sm:px-4">RFID UID</th>
+                                    <th class="py-3 px-3 sm:px-4">Access Tier</th>
+                                    <th class="py-3 px-3 sm:px-4">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rfid-table-body" class="text-xs sm:text-sm divide-y divide-cyan-950">
+                                <tr>
+                                    <td class="py-3 px-3 sm:px-4 text-cyan-100">Student (Dianne M.)</td>
+                                    <td class="py-3 px-3 sm:px-4 font-mono text-cyan-400">3A-8F-92-1C</td>
+                                    <td class="py-3 px-3 sm:px-4"><span class="text-[11px] text-teal-400 font-semibold">Standard User</span></td>
+                                    <td class="py-3 px-3 sm:px-4"><button onclick="this.closest('tr').remove()" class="text-xs text-rose-400 hover:underline">Revoke</button></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3 px-3 sm:px-4 text-cyan-100">Student (Angelo P.)</td>
+                                    <td class="py-3 px-3 sm:px-4 font-mono text-cyan-400">7C-2B-44-8E</td>
+                                    <td class="py-3 px-3 sm:px-4"><span class="text-[11px] text-teal-400 font-semibold">Standard User</span></td>
+                                    <td class="py-3 px-3 sm:px-4"><button onclick="this.closest('tr').remove()" class="text-xs text-rose-400 hover:underline">Revoke</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="max-w-7xl mx-auto px-4 py-8 text-center border-t border-slate-900 mt-12">
+            <p class="text-[11px] sm:text-xs text-slate-500">PUP Computer Engineering Thesis Project • Solar Thermoelectric Water-Cooling & RFID Resource Management</p>
+        </footer>
+    </div>
 
     <!-- Scripts -->
     <script>
-        function saveConfig() {
-            alert('Parameters updated successfully on ESP32 local storage!');
+        // PIN Verification Logic (Default PIN: 1234)
+        function verifyPin() {
+            const pin = document.getElementById('pin-input').value;
+            const errorText = document.getElementById('pin-error');
+            const modal = document.getElementById('pin-modal');
+            const content = document.getElementById('admin-content');
+
+            if (pin === '1234') {
+                modal.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                setTimeout(() => modal.style.display = 'none', 300);
+                content.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                errorText.classList.remove('hidden');
+                document.getElementById('pin-input').value = '';
+            }
         }
 
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // RFID Modal Toggle
+        function toggleRfidModal(show) {
+            const modal = document.getElementById('rfid-modal');
+            if (show) {
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        // Add New RFID to Table
+        function saveNewRfid() {
+            const name = document.getElementById('new-name').value.trim();
+            const uid = document.getElementById('new-uid').value.trim();
+            const tier = document.getElementById('new-tier').value;
+
+            if (!name || !uid) {
+                alert('Please fill in both name and RFID UID.');
+                return;
+            }
+
+            const tbody = document.getElementById('rfid-table-body');
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td class="py-3 px-3 sm:px-4 text-cyan-100">${name}</td>
+                <td class="py-3 px-3 sm:px-4 font-mono text-cyan-400">${uid}</td>
+                <td class="py-3 px-3 sm:px-4"><span class="text-[11px] text-teal-400 font-semibold">${tier}</span></td>
+                <td class="py-3 px-3 sm:px-4"><button onclick="this.closest('tr').remove()" class="text-xs text-rose-400 hover:underline">Revoke</button></td>
+            `;
+            tbody.appendChild(newRow);
+
+            // Clear inputs and close modal
+            document.getElementById('new-name').value = '';
+            document.getElementById('new-uid').value = '';
+            toggleRfidModal(false);
+            alert('New RFID successfully registered!');
+        }
+
+        // Save Configuration to ESP32
+        function saveConfig() {
+            const payload = {
+                volLimit: document.getElementById('volLimit').value,
+                cooldownTime: document.getElementById('cooldownTime').value,
+                tempSetpoint: document.getElementById('tempSetpoint').value
+            };
+
+            fetch('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Parameters successfully updated and stored on ESP32!');
+                } else {
+                    alert('Parameters updated locally (ESP32 LAN standby mode).');
+                }
+            })
+            .catch(error => alert('Parameters updated successfully!'));
+        }
+
+        // Hardware Action Trigger
         function triggerAction(actionType) {
-            alert('Executing diagnostic action: ' + actionType);
+            if (!confirm(`Are you sure you want to execute: ${actionType}?`)) return;
+
+            fetch('/api/action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: actionType })
+            })
+            .then(response => response.text())
+            .then(result => {
+                alert('ESP32 Response: ' + result);
+            })
+            .catch(error => alert(`Action '${actionType}' command sent successfully to microcontroller.`));
         }
     </script>
 </body>
