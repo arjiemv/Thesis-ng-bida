@@ -1,11 +1,181 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Thesis</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Thermoelectric Water Kiosk - Local Dashboard</title>
+    <!-- Tailwind CSS for modern responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for local performance analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
-  <h1>Thesis ng bida</h1>
-  <p>Palupitan ng webpage</p>
+<body class="bg-slate-950 text-cyan-50 font-sans leading-relaxed">
+
+    <!-- Header Navigation -->
+    <header class="bg-slate-900 border-b border-cyan-900/50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-wide text-cyan-400 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+                PUP Solar Hydration Kiosk (Edge Dashboard)
+            </h1>
+            <div class="flex items-center space-x-2 bg-cyan-950/60 border border-cyan-800/50 px-3 py-1.5 rounded-full">
+                <span class="inline-block w-2.5 h-2.5 bg-cyan-400 rounded-full animate-pulse"></span>
+                <span class="text-xs text-cyan-200">System Status: <strong class="text-cyan-400">Online (LAN)</strong></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Container -->
+    <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
+
+        <!-- Real-Time Telemetry Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <!-- Water Temperature Card -->
+            <div class="bg-gradient-to-br from-slate-900 to-cyan-950/40 border border-cyan-800/40 rounded-xl p-5 shadow-lg shadow-cyan-950/20">
+                <p class="text-xs text-cyan-300 uppercase tracking-wider font-semibold">Reservoir Water Temp</p>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span id="water-temp" class="text-3xl font-extrabold text-cyan-300">15.2 °C</span>
+                    <span class="text-xs text-cyan-400/80">Target: 15.0°C</span>
+                </div>
+            </div>
+            <!-- Ambient Temperature Card -->
+            <div class="bg-gradient-to-br from-slate-900 to-cyan-950/40 border border-cyan-800/40 rounded-xl p-5 shadow-lg shadow-cyan-950/20">
+                <p class="text-xs text-cyan-300 uppercase tracking-wider font-semibold">Ambient Temp</p>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span id="ambient-temp" class="text-3xl font-extrabold text-sky-300">34.8 °C</span>
+                    <span class="text-xs text-cyan-400/80">Heat Sink: <span id="heatsink-temp">42.1°C</span></span>
+                </div>
+            </div>
+            <!-- Battery / Solar Voltage Card -->
+            <div class="bg-gradient-to-br from-slate-900 to-cyan-950/40 border border-cyan-800/40 rounded-xl p-5 shadow-lg shadow-cyan-950/20">
+                <p class="text-xs text-cyan-300 uppercase tracking-wider font-semibold">Battery / Solar Status</p>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span id="battery-voltage" class="text-3xl font-extrabold text-teal-300">12.6 V</span>
+                    <span class="text-xs text-teal-400 font-semibold">Charging (MPPT)</span>
+                </div>
+            </div>
+            <!-- Water Level Card -->
+            <div class="bg-gradient-to-br from-slate-900 to-cyan-950/40 border border-cyan-800/40 rounded-xl p-5 shadow-lg shadow-cyan-950/20">
+                <p class="text-xs text-cyan-300 uppercase tracking-wider font-semibold">Water Tank Level</p>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span id="water-level" class="text-3xl font-extrabold text-blue-400">85%</span>
+                    <span class="text-xs text-cyan-400/80">Solenoid: <span class="text-teal-400">Ready</span></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics and Charts Section -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Temperature Trend Chart -->
+            <div class="bg-slate-900 border border-cyan-900/40 rounded-xl p-6 shadow-lg">
+                <h3 class="text-lg font-semibold text-cyan-200 mb-4">Cooling Performance (Temperature Trends)</h3>
+                <div class="relative h-64">
+                    <canvas id="tempChart"></canvas>
+                </div>
+            </div>
+            <!-- Power & Energy Utilization Chart -->
+            <div class="bg-slate-900 border border-cyan-900/40 rounded-xl p-6 shadow-lg">
+                <h3 class="text-lg font-semibold text-cyan-200 mb-4">Energy Utilization (Watt-Hours)</h3>
+                <div class="relative h-64">
+                    <canvas id="powerChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- RFID Access & Transaction Logs Table -->
+        <section class="bg-slate-900 border border-cyan-900/40 rounded-xl p-6 shadow-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-cyan-200">Recent RFID Transaction Logs (Fair-Share Governance)</h3>
+                <button onclick="clearLogs()" class="text-xs bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/50 px-3 py-1.5 rounded transition">Refresh Logs</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-cyan-900/50 text-cyan-400 text-xs uppercase">
+                            <th class="py-3 px-4">Timestamp</th>
+                            <th class="py-3 px-4">User UID</th>
+                            <th class="py-3 px-4">Dispensed Volume</th>
+                            <th class="py-3 px-4">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logTableBody" class="text-sm divide-y divide-cyan-950">
+                        <tr>
+                            <td class="py-3 px-4 text-cyan-100">2026-10-10 14:22:05</td>
+                            <td class="py-3 px-4 font-mono text-cyan-400">UID: 3A-8F-92-1C</td>
+                            <td class="py-3 px-4">500 mL</td>
+                            <td class="py-3 px-4"><span class="bg-teal-950 text-teal-300 border border-teal-800 text-xs px-2.5 py-1 rounded-full font-medium">Approved</span></td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4 text-cyan-100">2026-10-10 14:15:40</td>
+                            <td class="py-3 px-4 font-mono text-cyan-400">UID: 7C-2B-44-8E</td>
+                            <td class="py-3 px-4">0 mL</td>
+                            <td class="py-3 px-4"><span class="bg-sky-950 text-sky-300 border border-sky-800 text-xs px-2.5 py-1 rounded-full font-medium">Cooldown Active</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Script to simulate / fetch local ESP32 data -->
+    <script>
+        // Initialize Chart.js Temperature Trend
+        const ctxTemp = document.getElementById('tempChart').getContext('2d');
+        const tempChart = new Chart(ctxTemp, {
+            type: 'line',
+            data: {
+                labels: ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
+                datasets: [{
+                    label: 'Reservoir Temp (°C)',
+                    data: [16.5, 15.8, 15.1, 15.0, 14.9, 15.2],
+                    borderColor: '#06b6d4', // Cyan water tone
+                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                    borderWidth: 2.5,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { grid: { color: '#164e6355' }, ticks: { color: '#a5f3fc' } },
+                    x: { grid: { color: '#164e6355' }, ticks: { color: '#a5f3fc' } }
+                },
+                plugins: { legend: { labels: { color: '#ecfeff' } } }
+            }
+        });
+
+        // Initialize Chart.js Power Utilization
+        const ctxPower = document.getElementById('powerChart').getContext('2d');
+        const powerChart = new Chart(ctxPower, {
+            type: 'bar',
+            data: {
+                labels: ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
+                datasets: [{
+                    label: 'Power Consumption (Wh)',
+                    data: [42, 48, 55, 52, 45, 40],
+                    backgroundColor: '#0ea5e9', // Sky blue water tone
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { grid: { color: '#164e6355' }, ticks: { color: '#a5f3fc' } },
+                    x: { grid: { color: '#164e6355' }, ticks: { color: '#a5f3fc' } }
+                },
+                plugins: { legend: { labels: { color: '#ecfeff' } } }
+            }
+        });
+
+        function clearLogs() {
+            alert('Refreshing transaction data from local SPIFFS database...');
+        }
+    </script>
 </body>
 </html>
