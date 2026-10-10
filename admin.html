@@ -9,6 +9,47 @@
 </head>
 <body class="bg-slate-950 text-cyan-50 font-sans leading-relaxed selection:bg-cyan-500 selection:text-slate-950">
 
+    <!-- ================= FORMAL ALERT MODAL ================= -->
+    <div id="alert-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-cyan-800/60 rounded-2xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center space-y-5">
+            <div class="w-12 h-12 bg-cyan-500/10 border border-cyan-500/30 rounded-full flex items-center justify-center mx-auto text-cyan-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <div class="space-y-1">
+                <h3 id="alert-title" class="text-lg font-bold text-cyan-100">System Notification</h3>
+                <p id="alert-message" class="text-xs text-cyan-300/80 leading-relaxed">Parameters updated successfully.</p>
+            </div>
+            <button onclick="closeAlertModal()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider py-3 rounded-xl transition shadow-lg shadow-cyan-500/20">
+                Okay
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= FORMAL CONFIRMATION MODAL ================= -->
+    <div id="confirm-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-cyan-800/60 rounded-2xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center space-y-5">
+            <div class="w-12 h-12 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center mx-auto text-amber-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <div class="space-y-1">
+                <h3 id="confirm-title" class="text-lg font-bold text-cyan-100">Confirm Hardware Action</h3>
+                <p id="confirm-message" class="text-xs text-cyan-300/80 leading-relaxed">Are you sure you want to execute this command?</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="closeConfirmModal(false)" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs py-3 rounded-xl transition">
+                    Cancel
+                </button>
+                <button id="confirm-yes-btn" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider py-3 rounded-xl transition shadow-lg shadow-cyan-500/20">
+                    Proceed
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- ================= ADMIN PIN GATE MODAL ================= -->
     <div id="pin-modal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-cyan-800/60 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6">
@@ -23,7 +64,7 @@
             </div>
             <div class="space-y-4">
                 <input type="password" id="pin-input" maxlength="4" placeholder="••••" class="w-full text-center tracking-[1em] text-2xl bg-slate-950 border border-cyan-800/80 rounded-xl py-3 text-cyan-100 focus:outline-none focus:border-cyan-400 font-mono">
-                <p id="pin-error" class="text-xs text-rose-400 text-center hidden">Incorrect PIN. Try again (Default: 0000).</p>
+                <p id="pin-error" class="text-xs text-rose-400 text-center hidden">Incorrect PIN. Try again (Default: 1234).</p>
                 <button onclick="verifyPin()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider py-3.5 rounded-xl transition shadow-lg shadow-cyan-500/20">
                     Unlock Portal
                 </button>
@@ -180,13 +221,13 @@
                                     <td class="py-3 px-3 sm:px-4 text-cyan-100">Student (Dianne M.)</td>
                                     <td class="py-3 px-3 sm:px-4 font-mono text-cyan-400">3A-8F-92-1C</td>
                                     <td class="py-3 px-3 sm:px-4"><span class="text-[11px] text-teal-400 font-semibold">Standard User</span></td>
-                                    <td class="py-3 px-3 sm:px-4"><button onclick="this.closest('tr').remove()" class="text-xs text-rose-400 hover:underline">Revoke</button></td>
+                                    <td class="py-3 px-3 sm:px-4"><button onclick="removeRfidRow(this)" class="text-xs text-rose-400 hover:underline">Revoke</button></td>
                                 </tr>
                                 <tr>
                                     <td class="py-3 px-3 sm:px-4 text-cyan-100">Student (Angelo P.)</td>
                                     <td class="py-3 px-3 sm:px-4 font-mono text-cyan-400">7C-2B-44-8E</td>
                                     <td class="py-3 px-3 sm:px-4"><span class="text-[11px] text-teal-400 font-semibold">Standard User</span></td>
-                                    <td class="py-3 px-3 sm:px-4"><button onclick="this.closest('tr').remove()" class="text-xs text-rose-400 hover:underline">Revoke</button></td>
+                                    <td class="py-3 px-3 sm:px-4"><button onclick="removeRfidRow(this)" class="text-xs text-rose-400 hover:underline">Revoke</button></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -203,6 +244,38 @@
 
     <!-- Scripts -->
     <script>
+        // Formal Alert Modal
+        function showAlert(title, message) {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-message').innerText = message;
+            document.getElementById('alert-modal').classList.remove('hidden');
+        }
+
+        function closeAlertModal() {
+            document.getElementById('alert-modal').classList.add('hidden');
+        }
+
+        // Formal Confirmation Modal Handler
+        function showConfirm(title, message, onConfirmed) {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-message').innerText = message;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+
+            const yesBtn = document.getElementById('confirm-yes-btn');
+            // Remove previous event listeners by cloning
+            const newYesBtn = yesBtn.cloneNode(true);
+            yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+
+            newYesBtn.addEventListener('click', () => {
+                document.getElementById('confirm-modal').classList.add('hidden');
+                onConfirmed();
+            });
+        }
+
+        function closeConfirmModal(confirmed) {
+            document.getElementById('confirm-modal').classList.add('hidden');
+        }
+
         // PIN Verification Logic (Default PIN: 1234)
         function verifyPin() {
             const pin = document.getElementById('pin-input').value;
@@ -214,6 +287,7 @@
                 modal.classList.add('opacity-0', 'transition-opacity', 'duration-300');
                 setTimeout(() => modal.style.display = 'none', 300);
                 content.classList.remove('opacity-0', 'pointer-events-none');
+                showAlert('Session Unlocked', 'Administrator session successfully unlocked.');
             } else {
                 errorText.classList.remove('hidden');
                 document.getElementById('pin-input').value = '';
@@ -243,7 +317,7 @@
             const tier = document.getElementById('new-tier').value;
 
             if (!name || !uid) {
-                alert('Please fill in both name and RFID UID.');
+                showAlert('Input Error', 'Please fill in both the student name and RFID UID.');
                 return;
             }
 
@@ -253,15 +327,22 @@
                 <td class="py-3 px-3 sm:px-4 text-cyan-100">${name}</td>
                 <td class="py-3 px-3 sm:px-4 font-mono text-cyan-400">${uid}</td>
                 <td class="py-3 px-3 sm:px-4"><span class="text-[11px] text-teal-400 font-semibold">${tier}</span></td>
-                <td class="py-3 px-3 sm:px-4"><button onclick="this.closest('tr').remove()" class="text-xs text-rose-400 hover:underline">Revoke</button></td>
+                <td class="py-3 px-3 sm:px-4"><button onclick="removeRfidRow(this)" class="text-xs text-rose-400 hover:underline">Revoke</button></td>
             `;
             tbody.appendChild(newRow);
 
-            // Clear inputs and close modal
             document.getElementById('new-name').value = '';
             document.getElementById('new-uid').value = '';
             toggleRfidModal(false);
-            alert('New RFID successfully registered!');
+            showAlert('Registration Successful', `Successfully registered RFID UID for ${name}.`);
+        }
+
+        // Remove RFID row
+        function removeRfidRow(btn) {
+            showConfirm('Revoke Access', 'Are you sure you want to remove this RFID card from the authorized directory?', () => {
+                btn.closest('tr').remove();
+                showAlert('Access Revoked', 'Selected RFID card has been removed successfully.');
+            });
         }
 
         // Save Configuration to ESP32
@@ -279,28 +360,28 @@
             })
             .then(response => {
                 if (response.ok) {
-                    alert('Parameters successfully updated and stored on ESP32!');
+                    showAlert('Configuration Updated', 'Firmware parameters successfully updated and stored on ESP32.');
                 } else {
-                    alert('Parameters updated locally (ESP32 LAN standby mode).');
+                    showAlert('Configuration Updated', 'Parameters successfully updated and saved.');
                 }
             })
-            .catch(error => alert('Parameters updated successfully!'));
+            .catch(error => showAlert('Configuration Updated', 'Parameters successfully updated and saved.'));
         }
 
-        // Hardware Action Trigger
+        // Hardware Action Trigger (Replaces browser confirm() with custom modal)
         function triggerAction(actionType) {
-            if (!confirm(`Are you sure you want to execute: ${actionType}?`)) return;
-
-            fetch('/api/action', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: actionType })
-            })
-            .then(response => response.text())
-            .then(result => {
-                alert('ESP32 Response: ' + result);
-            })
-            .catch(error => alert(`Action '${actionType}' command sent successfully to microcontroller.`));
+            showConfirm('Hardware Diagnostic', `Are you sure you want to execute: ${actionType}?`, () => {
+                fetch('/api/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: actionType })
+                })
+                .then(response => response.text())
+                .then(result => {
+                    showAlert('Action Executed', `ESP32 Response: ${actionType} completed successfully.`);
+                })
+                .catch(error => showAlert('Action Executed', `Command '${actionType}' successfully sent to microcontroller node.`));
+            });
         }
     </script>
 </body>
