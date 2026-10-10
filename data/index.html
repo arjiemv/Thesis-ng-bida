@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Thermoelectric Water Kiosk - Live Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="dashboard.html" class="brand-title">Live Telemetry</a>
+            <div class="nav-links">
+                <a href="dashboard.html" class="nav-link-btn">← Home</a>
+                <a href="admin.html" class="nav-link-sub">Admin Portal</a>
+                <div class="status-badge"><span class="status-dot"></span><span>Online</span></div>
+            </div>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+        </div>
+        <div id="mobile-menu" class="mobile-dropdown">
+            <a href="dashboard.html" class="kiosk-btn">← Back to Home</a>
+            <a href="admin.html" class="nav-link-sub">Admin Portal</a>
+        </div>
+    </header>
+
+    <main class="container telemetry-wrapper">
+        <div class="kiosk-card flex-between">
+            <div>
+                <h2 class="section-title">Station Telemetry & Analytics</h2>
+                <p class="card-desc">Real-time sensor metrics streamed directly from the ESP32 edge server.</p>
+            </div>
+            <div class="badge-status">Status: Operating Normally</div>
+        </div>
+
+        <div class="grid-4">
+            <div class="kiosk-card">
+                <p class="metric-label">Reservoir Water Temp</p>
+                <div class="flex-baseline">
+                    <span id="water-temp" class="metric-value text-water">-- °C</span>
+                    <span class="card-desc">Target: 15.0°C</span>
+                </div>
+            </div>
+            <div class="kiosk-card">
+                <p class="metric-label">Ambient Temp</p>
+                <div class="flex-baseline">
+                    <span id="ambient-temp" class="metric-value text-ambient">-- °C</span>
+                    <span class="card-desc">Heat Sink: <span id="heatsink-temp">--°C</span></span>
+                </div>
+            </div>
+            <div class="kiosk-card">
+                <p class="metric-label">Battery Voltage</p>
+                <div class="flex-baseline">
+                    <span id="battery-voltage" class="metric-value text-battery">-- V</span>
+                    <span class="text-active">Active</span>
+                </div>
+            </div>
+            <div class="kiosk-card">
+                <p class="metric-label">Water Tank Level</p>
+                <div class="flex-baseline">
+                    <span id="water-level" class="metric-value text-level">--%</span>
+                    <span class="card-desc">Solenoid: <span class="text-active">Ready</span></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="kiosk-card">
+                <h3 class="card-title">Cooling Performance (Temperature Trends)</h3>
+                <div class="chart-container"><canvas id="tempChart"></canvas></div>
+            </div>
+            <div class="kiosk-card">
+                <h3 class="card-title">Energy Utilization (Watt-Hours)</h3>
+                <div class="chart-container"><canvas id="powerChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="kiosk-card">
+            <div class="flex-between">
+                <h3 class="card-title">Recent RFID Transaction Logs</h3>
+                <button onclick="refreshData()" class="kiosk-btn">Refresh Logs</button>
+            </div>
+            <div class="table-container">
+                <table class="kiosk-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User UID</th>
+                            <th>Volume</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logTableBody">
+                        <tr>
+                            <td colspan="4" class="card-desc">Fetching transactional logs from ESP32...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>PUP Computer Engineering Thesis Project • Solar Thermoelectric Water-Cooling & RFID Resource Management</p>
+    </footer>
+
+    <script src="js/telemetry.js"></script>
+</body>
+</html>

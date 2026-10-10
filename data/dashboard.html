@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Thermoelectric Water Kiosk - Home</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="dashboard.html" class="brand-title">PUP Hydration Kiosk</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link-btn">Live Telemetry</a>
+                <a href="admin.html" class="nav-link-sub">Admin Portal</a>
+                <div class="status-badge"><span class="status-dot"></span><span>Online</span></div>
+            </div>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+        </div>
+        <div id="mobile-menu" class="mobile-dropdown">
+            <a href="index.html" class="kiosk-btn">Live Telemetry</a>
+            <a href="admin.html" class="nav-link-sub">Admin Portal</a>
+        </div>
+    </header>
+
+    <main class="container page-wrapper">
+        <div class="kiosk-card hero-card">
+            <span class="hero-tag">PUP Computer Engineering Thesis Project</span>
+            <h2 class="hero-title">
+                Sustainable Campus Hydration with <span class="text-cyan">Smart Edge Governance</span>
+            </h2>
+            <p class="hero-text">
+                A self-sustaining, solar-powered thermoelectric water-cooling system equipped with RFID-based fair-share allocation rules. Designed to provide chilled, safe drinking water while managing campus resource distribution efficiently offline.
+            </p>
+            <div class="flex-actions">
+                <a href="index.html" class="kiosk-btn">View Live Telemetry →</a>
+                <a href="admin.html" class="kiosk-btn-outline">Administrator Login →</a>
+            </div>
+        </div>
+
+        <div class="grid-3">
+            <div class="kiosk-card">
+                <div class="feature-icon">01</div>
+                <h3 class="card-title">Solar Thermoelectric Cooling</h3>
+                <p class="card-desc">Powered by renewable solar energy and MPPT charging controllers, maintaining an optimal chilled reservoir temperature.</p>
+            </div>
+            <div class="kiosk-card">
+                <div class="feature-icon">02</div>
+                <h3 class="card-title">RFID Fair-Share Governance</h3>
+                <p class="card-desc">Equipped with MFRC522 readers to enforce equitable volumetric limits (500mL per tap) and user cooldown timers.</p>
+            </div>
+            <div class="kiosk-card">
+                <div class="feature-icon">03</div>
+                <h3 class="card-title">Edge Local Area Network</h3>
+                <p class="card-desc">Operates completely offline over a secure LAN architecture, logging transactions locally on the microcontroller.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>PUP Computer Engineering Thesis Project • Solar Thermoelectric Water-Cooling & RFID Resource Management</p>
+    </footer>
+
+    <script>
+        function toggleMobileMenu() {
+            document.getElementById('mobile-menu').classList.toggle('active');
+        }
+    </script>
+</body>
+</html>
