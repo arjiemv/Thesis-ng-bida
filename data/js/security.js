@@ -62,3 +62,20 @@ function updateAdminCredentials() {
     })
     .catch(() => showAlert('Security Updated', 'Credentials updated and securely hashed on ESP32 node.'));
 }
+
+// Theme Toggle Logic
+function toggleTheme() {
+    document.body.classList.toggle('light-mode');
+    const isLight = document.body.classList.contains('light-mode');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    const btn = document.getElementById('theme-toggle-btn');
+    if (btn) btn.textContent = isLight ? '🌙 Dark Mode' : '☀️ Light Mode';
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('theme') === 'light') {
+        document.body.classList.add('light-mode');
+        const btn = document.getElementById('theme-toggle-btn');
+        if (btn) btn.textContent = '🌙 Dark Mode';
+    }
+});

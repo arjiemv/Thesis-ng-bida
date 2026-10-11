@@ -143,3 +143,20 @@ function triggerAction(actionName) {
     })
     .catch(() => showAlert('Command Dispatched', `Executed ${actionName} on embedded hardware node.`));
 }
+
+// Theme Toggle Logic
+function toggleTheme() {
+    document.body.classList.toggle('light-mode');
+    const isLight = document.body.classList.contains('light-mode');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    const btn = document.getElementById('theme-toggle-btn');
+    if (btn) btn.textContent = isLight ? '🌙 Dark Mode' : '☀️ Light Mode';
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('theme') === 'light') {
+        document.body.classList.add('light-mode');
+        const btn = document.getElementById('theme-toggle-btn');
+        if (btn) btn.textContent = '🌙 Dark Mode';
+    }
+});
