@@ -168,6 +168,13 @@ header {
     font-size: 0.875rem;
     color: var(--text-primary);
 }
+
+.kiosk-input, .pin-input-field {
+    letter-spacing: normal !important;
+    text-align: left !important;
+    box-sizing: border-box;
+}
+
 .kiosk-input:focus { outline: none; border-color: var(--accent-cyan); }
 
 .table-container { overflow-x: auto; }

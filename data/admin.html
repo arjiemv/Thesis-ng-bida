@@ -12,7 +12,7 @@
             <div class="feature-icon">✓</div>
             <h3 id="alert-title" class="card-title">System Notification</h3>
             <p id="alert-message" class="card-desc">Parameters updated successfully.</p>
-            <button onclick="closeAlertModal()" class="kiosk-btn" style="width: 100%;">Okay</button>
+            <button onclick="closeAlertModal()" class="kiosk-btn">Okay</button>
         </div>
     </div>
 
@@ -32,12 +32,12 @@
         <div class="modal-box">
             <div class="feature-icon">🔒</div>
             <h3 class="card-title">Administrator Access</h3>
-            <p class="card-desc mb-3">Enter 4-digit security PIN (Default: 1234).</p>
+            <p class="card-desc mb-3">Enter security password (Default: 1234).</p>
             <div class="pin-container">
-                <input type="password" id="pin-input" maxlength="4" placeholder="••••" class="kiosk-input pin-input-field">
-                <p id="pin-error" class="text-error">Incorrect PIN. Try again.</p>
-                <button onclick="verifyPin()" class="kiosk-btn" style="width: 100%;">Unlock Portal</button>
-                <a href="dashboard.html" class="nav-link-sub" style="margin-top: 0.5rem;">← Return to Public Home</a>
+                <input type="password" id="pin-input" placeholder="Enter Password" class="kiosk-input pin-input-field">
+                <p id="pin-error" class="text-error">Incorrect password. Try again.</p>
+                <button onclick="verifyPin()" class="kiosk-btn">Unlock Portal</button>
+                <a href="dashboard.html" class="nav-link-sub">← Return to Public Home</a>
             </div>
         </div>
     </div>
@@ -64,7 +64,7 @@
                         <option value="Administrator">Administrator</option>
                     </select>
                 </div>
-                <button onclick="saveNewRfid()" class="kiosk-btn" style="width: 100%; margin-top: 0.5rem;">Save to ESP32 Database</button>
+                <button onclick="saveNewRfid()" class="kiosk-btn">Save to ESP32 Database</button>
             </div>
         </div>
     </div>
@@ -75,6 +75,7 @@
                 <a href="admin.html" class="brand-title">Admin Control Center</a>
                 <div class="nav-links">
                     <a href="index.html" class="nav-link-btn">Live Dashboard</a>
+                    <a href="security.html" class="nav-link-sub">Security Settings</a>
                     <a href="dashboard.html" class="nav-link-sub">Home</a>
                     <div class="status-badge"><span class="status-dot"></span><span>Secure Session</span></div>
                 </div>
@@ -82,6 +83,7 @@
             </div>
             <div id="mobile-menu" class="mobile-dropdown">
                 <a href="index.html" class="kiosk-btn">Live Dashboard</a>
+                <a href="security.html" class="nav-link-sub">Security Settings</a>
                 <a href="dashboard.html" class="nav-link-sub">Return to Home</a>
             </div>
         </header>
@@ -107,7 +109,7 @@
                         <label class="card-desc">Target Cooling Setpoint (°C)</label>
                         <input type="number" step="0.1" id="tempSetpoint" value="15.0" class="kiosk-input">
                     </div>
-                    <button onclick="saveConfig()" class="kiosk-btn" style="width: 100%; margin-top: 0.5rem;">Update Firmware Parameters</button>
+                    <button onclick="saveConfig()" class="kiosk-btn">Update Firmware Parameters</button>
                 </div>
 
                 <div class="kiosk-card modal-body-stack">
