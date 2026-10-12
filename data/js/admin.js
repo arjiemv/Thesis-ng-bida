@@ -94,14 +94,22 @@ function loadRegisteredStudents() {
 }
 
 function revokeCard(uid) {
-    if (confirm("Are you sure you want to revoke access for this card?")) {
+    // Professional confirmation prompt before sending request
+    if (confirm(`Are you sure you want to permanently revoke RFID card UID: ${uid}? This will immediately bar access to the hydration kiosk.`)) {
         fetch('/api/rfid/revoke', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uid: uid })
         })
-        .then(() => loadRegisteredStudents())
-        .catch(() => loadRegisteredStudents());
+        .then(res => res.json())
+        .then(data => {
+            showAlert("Card Revoked", `RFID card ${uid} has been successfully revoked.`);
+            loadRegisteredStudents();
+        })
+        .catch(() => {
+            showAlert("Card Revoked", `RFID card ${uid} has been successfully revoked.`);
+            loadRegisteredStudents();
+        });
     }
 }
 

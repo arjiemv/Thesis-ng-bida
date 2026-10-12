@@ -98,7 +98,7 @@ function fetchLiveTelemetry() {
     })
     .catch(() => {
         const systemStatusEl = document.getElementById('system-status-text');
-        if (systemStatusEl) systemStatusEl.textContent = "Fully Operational";
+        if (systemStatusEl) systemStatusEl.textContent = "Offline / Disconnected";
     });
 }
 
