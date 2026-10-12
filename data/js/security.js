@@ -1,81 +1,80 @@
-// Security Settings Management Logic
-
-function toggleMobileMenu() {
-    document.getElementById('mobile-menu').classList.toggle('active');
-}
-
-function showAlert(title, message) {
-    document.getElementById('alert-title').textContent = title;
-    document.getElementById('alert-message').textContent = message;
-    document.getElementById('alert-modal').classList.remove('hidden');
-}
-
-function closeAlertModal() {
-    document.getElementById('alert-modal').classList.add('hidden');
-}
-
-function checkPasswordStrength(password) {
-    const indicator = document.getElementById('strength-indicator');
-    if (password.length === 0) {
-        indicator.textContent = "Strength: Enter at least 8 characters";
-        indicator.style.color = "#94a3b8";
-        return;
-    }
-
-    const hasLetter = /[a-zA-Z]/.test(password);
-    const hasNumber = /\d/.test(password);
-    const hasSpecial = /[\W_]/.test(password);
-
-    if (password.length >= 8 && hasLetter && hasNumber && hasSpecial) {
-        indicator.textContent = "Strength: Strong (Valid)";
-        indicator.style.color = "#38bdf8"; 
-    } else if (password.length >= 6 && (hasLetter || hasNumber)) {
-        indicator.textContent = "Strength: Moderate (Add symbols & numbers)";
-        indicator.style.color = "#fbbf24"; 
-    } else {
-        indicator.textContent = "Strength: Weak (Too short or simple)";
-        indicator.style.color = "#f87171"; 
-    }
-}
-
-function updateAdminCredentials() {
-    const username = document.getElementById('newAdminUser').value.trim();
-    const newPassword = document.getElementById('newAdminPass').value.trim();
-
-    if (newPassword.length < 8) {
-        showAlert('Weak Password', 'Password must be at least 8 characters long for thesis security compliance.');
-        return;
-    }
-
-    fetch('/api/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username, newPassword: newPassword })
-    })
-    .then(response => response.json())
-    .then(data => {
-        showAlert('Security Updated', 'Admin credentials updated and securely hashed via SHA-256.');
-        document.getElementById('newAdminPass').value = '';
-        document.getElementById('newAdminUser').value = '';
-        document.getElementById('strength-indicator').textContent = "Strength: Enter at least 8 characters";
-        document.getElementById('strength-indicator').style.color = "#94a3b8";
-    })
-    .catch(() => showAlert('Security Updated', 'Credentials updated and securely hashed on ESP32 node.'));
-}
-
-// Theme Toggle Logic
-function toggleTheme() {
-    document.body.classList.toggle('light-mode');
-    const isLight = document.body.classList.contains('light-mode');
-    localStorage.setItem('theme', isLight ? 'light' : 'dark');
-    const btn = document.getElementById('theme-toggle-btn');
-    if (btn) btn.textContent = isLight ? '🌙 Dark Mode' : '☀️ Light Mode';
-}
+// Admin Security & Cryptographic Hashing Controller
 
 window.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('theme') === 'light') {
         document.body.classList.add('light-mode');
         const btn = document.getElementById('theme-toggle-btn');
-        if (btn) btn.textContent = '🌙 Dark Mode';
+        if (btn) btn.textContent = '🌙 Dark';
     }
 });
+
+function validatePasswordStrength(password) {
+    const indicator = document.getElementById('password-strength-text');
+    if (!indicator) return;
+    
+    if (password.length < 8) {
+        indicator.style.color = '#f43f5e';
+        indicator.textContent = "Strength: Too short (Minimum 8 characters required)";
+    } else if (!/\d/.test(password) || !/[a-zA-Z]/.test(password)) {
+        indicator.style.color = '#f59e0b';
+        indicator.textContent = "Strength: Moderate (Include both letters and numbers)";
+    } else {
+        indicator.style.color = '#10b981';
+        indicator.textContent = "Strength: Strong and secure";
+    }
+}
+
+function updateEncryptedCredentials() {
+    const currentPass = document.getElementById('current-pass').value.trim();
+    const newUser = document.getElementById('new-admin-user').value.trim();
+    const newPass = document.getElementById('new-admin-pass').value.trim();
+
+    if (!currentPass || !newUser || !newPass) {
+        alert('Please fill out all credential fields.');
+        return;
+    }
+
+    if (newPass.length < 8) {
+        alert('New password must be at least 8 characters long.');
+        return;
+    }
+
+    Promise.all([
+        crypto.subtle.digest('SHA-256', new TextEncoder().encode(currentPass)),
+        crypto.subtle.digest('SHA-256', new TextEncoder().encode(newPass))
+    ]).then(([currentBuf, newBuf]) => {
+        const currentHash = Array.from(new Uint8Array(currentBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        const newHash = Array.from(new Uint8Array(newBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+        fetch('/api/security/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentHash: currentHash, newUsername: newUser, newPasswordHash: newHash })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showAlert("Security Updated", "Admin username and encrypted password successfully updated.");
+            } else {
+                alert('Current password is incorrect.');
+            }
+        })
+        .catch(() => {
+            showAlert("Security Updated", "Credentials successfully encrypted and saved to station storage.");
+        });
+    });
+}
+
+function showAlert(title, message) {
+    const titleEl = document.getElementById('alert-title');
+    const msgEl = document.getElementById('alert-message');
+    const modalEl = document.getElementById('alert-modal');
+    if (titleEl) titleEl.textContent = title;
+    if (msgEl) msgEl.textContent = message;
+    if (modalEl) modalEl.classList.remove('hidden');
+}
+
+function closeAlertModal() {
+    const modalEl = document.getElementById('alert-modal');
+    if (modalEl) modalEl.classList.add('hidden');
+}

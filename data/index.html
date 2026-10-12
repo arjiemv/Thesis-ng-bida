@@ -3,107 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar Thermoelectric Water Kiosk - Live Dashboard</title>
+    <title>Live Water Status — Solar Thermoelectric Water-Cooling System</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <header>
         <div class="header-content">
-            <a href="dashboard.html" class="brand-title">Live Telemetry</a>
-            <div class="nav-links">
-                <a href="dashboard.html" class="nav-link-btn">← Home</a>
-                <a href="admin.html" class="nav-link-sub">Admin Portal</a>
-                <div class="status-badge"><span class="status-dot"></span><span>Online</span></div>
+            <a href="dashboard.html" class="brand-title">PUP Hydration Kiosk</a>
+            
+            <nav class="nav-pill-container">
+                <a href="dashboard.html" class="nav-pill-link">Home</a>
+                <a href="index.html" class="nav-pill-link active">Water Status</a>
+                <button onclick="openStaffLoginModalFromAnywhere()" class="nav-pill-link" style="color: var(--accent-cyan); background: transparent; border: none; cursor: pointer;">Admin Portal</button>
+            </nav>
+
+            <div class="header-right-group">
+                <button onclick="toggleTheme()" class="kiosk-btn-outline" style="padding: 0.45rem 0.9rem; font-size: 0.7rem;" id="theme-toggle-btn">☀️ Light Mode</button>
+                <div class="status-badge"><span class="status-dot"></span><span id="esp-status-text">Connected</span></div>
             </div>
-            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
-        </div>
-        <div id="mobile-menu" class="mobile-dropdown">
-            <a href="dashboard.html" class="kiosk-btn">← Back to Home</a>
-            <a href="admin.html" class="nav-link-sub">Admin Portal</a>
         </div>
     </header>
 
     <main class="container telemetry-wrapper">
         <div class="kiosk-card flex-between">
             <div>
-                <h2 class="section-title">Station Telemetry & Analytics</h2>
-                <p class="card-desc">Real-time sensor metrics streamed directly from the ESP32 edge server.</p>
+                <h2 class="section-title">Live Water Status & Health</h2>
+                <p class="card-desc">Real-time water temperature, cleanliness checks, solar battery levels, and recent dispensing activity.</p>
             </div>
-            <div class="badge-status">Status: Operating Normally</div>
+            <div class="badge-status">Status: <span id="system-status-text" class="text-cyan">Synchronizing...</span></div>
         </div>
 
         <div class="grid-4">
             <div class="kiosk-card">
-                <p class="metric-label">Reservoir Water Temp</p>
-                <div class="flex-baseline">
-                    <span id="water-temp" class="metric-value text-water">-- °C</span>
-                    <span class="card-desc">Target: 15.0°C</span>
+                <p class="metric-label">Water Temperature</p>
+                <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 0.5rem;">
+                    <span id="water-temp" class="metric-value text-cyan">-- °C</span>
+                    <span class="card-desc">Target: 15°C</span>
                 </div>
             </div>
             <div class="kiosk-card">
-                <p class="metric-label">Ambient Temp</p>
-                <div class="flex-baseline">
-                    <span id="ambient-temp" class="metric-value text-ambient">-- °C</span>
-                    <span class="card-desc">Heat Sink: <span id="heatsink-temp">--°C</span></span>
+                <p class="metric-label">Climate & Heat</p>
+                <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 0.5rem;">
+                    <span id="ambient-temp" class="metric-value">-- °C</span>
+                    <span class="card-desc" id="cooling-state-label">Cooling: --</span>
                 </div>
             </div>
             <div class="kiosk-card">
-                <p class="metric-label">Battery Voltage</p>
-                <div class="flex-baseline">
-                    <span id="battery-voltage" class="metric-value text-battery">-- V</span>
-                    <span class="text-active">Active</span>
+                <p class="metric-label">Solar Battery</p>
+                <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 0.5rem;">
+                    <span id="battery-voltage" class="metric-value text-cyan">-- V</span>
+                    <span id="solar-status-label" class="text-active">--</span>
                 </div>
             </div>
             <div class="kiosk-card">
-                <p class="metric-label">Water Tank Level</p>
-                <div class="flex-baseline">
-                    <span id="water-level" class="metric-value text-level">--%</span>
-                    <span class="card-desc">Solenoid: <span class="text-active">Ready</span></span>
+                <p class="metric-label">Water Tank</p>
+                <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 0.5rem;">
+                    <span id="water-level" class="metric-value text-cyan">--%</span>
+                    <span class="card-desc" id="valve-state-label">--</span>
                 </div>
             </div>
         </div>
 
         <div class="grid-2">
             <div class="kiosk-card">
-                <h3 class="card-title">Cooling Performance (Temperature Trends)</h3>
-                <div class="chart-container"><canvas id="tempChart"></canvas></div>
+                <h3 class="card-title">Water Temperature Control Stability (°C)</h3>
+                <div style="height: 250px; margin-top: 1rem;"><canvas id="tempChart"></canvas></div>
             </div>
             <div class="kiosk-card">
-                <h3 class="card-title">Energy Utilization (Watt-Hours)</h3>
-                <div class="chart-container"><canvas id="powerChart"></canvas></div>
+                <h3 class="card-title">Solar Energy & Power Usage (Wh)</h3>
+                <div style="height: 250px; margin-top: 1rem;"><canvas id="powerChart"></canvas></div>
             </div>
         </div>
 
         <div class="kiosk-card">
             <div class="flex-between">
-                <h3 class="card-title">Recent RFID Transaction Logs</h3>
-                <button onclick="refreshData()" class="kiosk-btn">Refresh Logs</button>
+                <h3 class="card-title">Recent Refill Activity Log</h3>
+                <button onclick="refreshLogs()" class="kiosk-btn">Refresh Activity</button>
             </div>
-            <div class="table-container">
+            <div class="table-container" style="margin-top: 1rem;">
                 <table class="kiosk-table">
                     <thead>
                         <tr>
-                            <th>Timestamp</th>
-                            <th>User UID</th>
-                            <th>Volume</th>
+                            <th>Time</th>
+                            <th>Student ID</th>
+                            <th>Water Dispensed</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody id="logTableBody">
-                        <tr>
-                            <td colspan="4" class="card-desc">Fetching transactional logs from ESP32...</td>
-                        </tr>
+                        <!-- Populated dynamically via js/telemetry.js -->
                     </tbody>
                 </table>
             </div>
         </div>
     </main>
 
+    <!-- Admin Portal Secure Login Modal for Index Page -->
+    <div id="staff-login-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="card-title">Admin Portal Secure Login</h3>
+                <button onclick="closeStaffLoginModal()" class="nav-pill-link" style="font-size: 1rem; color: var(--text-primary);">✕</button>
+            </div>
+            <div class="modal-body-stack">
+                <p class="card-desc">Enter your administrator credentials to securely log in and access system management.</p>
+                <div>
+                    <label class="metric-label">Username</label>
+                    <input type="text" id="staff-username" placeholder="Enter username" class="kiosk-input" style="margin-top: 0.4rem;">
+                </div>
+                <div>
+                    <label class="metric-label">Password</label>
+                    <input type="password" id="staff-password" placeholder="Enter password" class="kiosk-input" style="margin-top: 0.4rem;">
+                </div>
+                <button onclick="submitStaffLogin()" class="kiosk-btn" style="width: 100%; margin-top: 0.5rem;">Secure Sign In</button>
+            </div>
+        </div>
+    </div>
+
     <footer>
-        <p>PUP Computer Engineering Thesis Project • Solar Thermoelectric Water-Cooling & RFID Resource Management</p>
+        <p>Polytechnic University of the Philippines • Department of Computer Engineering</p>
     </footer>
 
+    <script src="js/dashboard.js"></script>
     <script src="js/telemetry.js"></script>
 </body>
 </html>

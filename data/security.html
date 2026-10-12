@@ -3,64 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar Thermoelectric Water Kiosk - Security Settings</title>
+    <title>PUP Hydration Kiosk — Security Settings</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="alert-modal" class="modal-overlay hidden">
-        <div class="modal-box">
-            <div class="feature-icon">✓</div>
-            <h3 id="alert-title" class="card-title">System Notification</h3>
-            <p id="alert-message" class="card-desc">Parameters updated successfully.</p>
+        <div class="modal-box" style="text-align: center;">
+            <div class="feature-icon" style="margin: 0 auto 1.25rem auto;">✓</div>
+            <h3 id="alert-title" class="card-title">Notice</h3>
+            <p id="alert-message" class="card-desc" style="margin-bottom: 1.75rem;">Credentials updated successfully.</p>
             <button onclick="closeAlertModal()" class="kiosk-btn">Okay</button>
         </div>
     </div>
 
     <header>
         <div class="header-content">
-            <a href="admin.html" class="brand-title">Admin Control Center</a>
-            <div class="nav-links">
-                <a href="admin.html" class="nav-link-btn">Control Dashboard</a>
-                <a href="dashboard.html" class="nav-link-sub">Home</a>
-                <div class="status-badge"><span class="status-dot"></span><span>Secure Session</span></div>
+            <a href="admin.html" class="brand-title">PUP Admin Portal</a>
+            
+            <nav class="nav-pill-container">
+                <a href="dashboard.html" class="nav-pill-link">Home</a>
+                <a href="index.html" class="nav-pill-link">Water Status</a>
+                <a href="admin.html" class="nav-pill-link active">Admin Portal</a>
+            </nav>
+
+            <div class="header-right-group">
+                <a href="admin.html" class="kiosk-btn-outline" style="padding: 0.45rem 0.9rem; font-size: 0.7rem;">← Control Center</a>
+                <button onclick="toggleTheme()" class="kiosk-btn-outline" style="padding: 0.45rem 0.9rem; font-size: 0.7rem;" id="theme-toggle-btn">☀️ Light</button>
             </div>
-            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
-        </div>
-        <div id="mobile-menu" class="mobile-dropdown">
-            <a href="admin.html" class="kiosk-btn">Control Dashboard</a>
-            <a href="dashboard.html" class="nav-link-sub">Return to Home</a>
         </div>
     </header>
 
-    <main class="container page-wrapper" style="max-width: 600px;">
-        <div class="kiosk-card hero-card" style="margin-bottom: 1.5rem; padding: 1.5rem;">
-            <span class="hero-tag">Access Management</span>
-            <h2 class="section-title" style="font-size: 1.5rem; margin-top: 0.5rem;">Administrator Credentials</h2>
-            <p class="card-desc">Update default system access credentials. Passwords must meet security complexity rules and will be stored as cryptographic SHA-256 hashes on the ESP32.</p>
+    <main class="container page-wrapper" style="max-width: 650px;">
+        <div class="kiosk-card hero-card" style="margin-bottom: 2rem; padding: 2rem;">
+            <span class="hero-tag">System Security</span>
+            <h2 class="section-title" style="font-size: 1.6rem; margin-top: 0.5rem;">Admin Account Credentials</h2>
+            <p class="card-desc">Update your admin username and secure password. Passwords are encrypted using strong cryptographic hashing before being saved on the microcontroller.</p>
         </div>
 
         <div class="kiosk-card modal-body-stack">
-            <h3 class="card-title modal-header">Modify System Login</h3>
+            <h3 class="card-title modal-header" style="margin-bottom: 0;">Change Admin Credentials</h3>
             <div>
-                <label class="card-desc">Current Admin Username</label>
-                <input type="text" id="currentAdminUser" value="admin" disabled class="kiosk-input" style="opacity: 0.7;">
+                <label class="card-desc">Current Admin Password</label>
+                <input type="password" id="current-pass" placeholder="Enter current password" class="kiosk-input" style="margin-top: 0.4rem;">
             </div>
             <div>
-                <label class="card-desc">New Administrator Username</label>
-                <input type="text" id="newAdminUser" placeholder="e.g., kiosk_admin" class="kiosk-input">
+                <label class="card-desc">New Admin Username</label>
+                <input type="text" id="new-admin-user" placeholder="e.g., admin_kiosk" class="kiosk-input" style="margin-top: 0.4rem;">
             </div>
             <div>
-                <label class="card-desc">New Password</label>
-                <input type="password" id="newAdminPass" placeholder="Enter secure password" class="kiosk-input" oninput="checkPasswordStrength(this.value)">
-                <p id="strength-indicator" class="card-desc" style="margin-top: 0.3rem; font-size: 0.8rem; color: #94a3b8;">Strength: Enter at least 8 characters</p>
+                <label class="card-desc">New Secure Password (Min. 8 characters, letters & numbers)</label>
+                <input type="password" id="new-admin-pass" placeholder="Enter strong password" class="kiosk-input" oninput="validatePasswordStrength(this.value)" style="margin-top: 0.4rem;">
+                <p id="password-strength-text" class="card-desc" style="margin-top: 0.4rem; font-size: 0.8rem; color: #94a3b8;">Strength: Enter at least 8 characters with numbers and letters</p>
             </div>
-            <button onclick="updateAdminCredentials()" class="kiosk-btn" style="width: 100%; margin-top: 0.5rem;">Save & Securely Hash Credentials</button>
-            <a href="admin.html" class="nav-link-sub" style="text-align: center; margin-top: 0.5rem; display: block;">← Back to Control Center</a>
+            <button onclick="updateEncryptedCredentials()" class="kiosk-btn" style="width: 100%; margin-top: 0.75rem;">Save & Hash Credentials Securely</button>
+            <a href="admin.html" style="text-align: center; margin-top: 0.75rem; display: block; color: var(--accent-cyan); font-size: 0.85rem; text-decoration: none; font-weight: 600;">← Back to Admin Portal</a>
         </div>
     </main>
 
     <footer>
-        <p>PUP Computer Engineering Thesis Project • Solar Thermoelectric Water-Cooling & RFID Resource Management</p>
+        <p>Polytechnic University of the Philippines • Department of Computer Engineering</p>
     </footer>
 
     <script src="js/security.js"></script>

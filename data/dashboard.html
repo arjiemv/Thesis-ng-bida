@@ -3,68 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar Thermoelectric Water Kiosk - Home</title>
+    <title>Solar Thermoelectric Water-Cooling & RFID Resource Management System</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
         <div class="header-content">
-            <a href="dashboard.html" class="brand-title">PUP Hydration Kiosk</a>
-            <div class="nav-links">
-                <a href="index.html" class="nav-link-btn">Live Telemetry</a>
-                <a href="admin.html" class="nav-link-sub">Admin Portal</a>
-                <div class="status-badge"><span class="status-dot"></span><span>Online</span></div>
+            <a href="dashboard.html" class="brand-title">
+                <span class="status-dot"></span> PUP Hydration Kiosk
+            </a>
+            
+            <nav class="nav-pill-container">
+                <a href="dashboard.html" class="nav-pill-link active">Home</a>
+                <a href="index.html" class="nav-pill-link">Water Status</a>
+                <button onclick="openStaffLoginModal()" class="nav-pill-link" style="color: var(--accent-cyan); background: transparent; border: none; cursor: pointer;">Admin Portal</button>
+            </nav>
+
+            <div class="header-right-group">
+                <button onclick="toggleTheme()" class="kiosk-btn-outline" style="padding: 0.45rem 0.9rem; font-size: 0.7rem;" id="theme-toggle-btn">☀️ Light Mode</button>
+                <div class="status-badge"><span class="status-dot"></span><span id="header-status">Online</span></div>
             </div>
-            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
-        </div>
-        <div id="mobile-menu" class="mobile-dropdown">
-            <a href="index.html" class="kiosk-btn">Live Telemetry</a>
-            <a href="admin.html" class="nav-link-sub">Admin Portal</a>
         </div>
     </header>
 
     <main class="container page-wrapper">
-        <div class="kiosk-card hero-card">
-            <span class="hero-tag">PUP Computer Engineering Thesis Project</span>
+        <div class="hero-card kiosk-card">
+            <span class="hero-tag">Polytechnic University of the Philippines • Sta. Mesa, Manila</span>
             <h2 class="hero-title">
-                Sustainable Campus Hydration with <span class="text-cyan">Smart Edge Governance</span>
+                Solar Thermoelectric Water-Cooling & <span class="text-cyan">RFID Resource Management System</span>
             </h2>
             <p class="hero-text">
-                A self-sustaining, solar-powered thermoelectric water-cooling system equipped with RFID-based fair-share allocation rules. Designed to provide chilled, safe drinking water while managing campus resource distribution efficiently offline.
+                An off-grid, photovoltaic-powered thermoelectric hydration station engineered to provide chilled drinking water while enforcing fair-share distribution and real-time offline IoT edge analytics.
             </p>
-            <div class="flex-actions">
-                <a href="index.html" class="kiosk-btn">View Live Telemetry →</a>
-                <a href="admin.html" class="kiosk-btn-outline">Administrator Login →</a>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button onclick="openRegistrationModal()" class="kiosk-btn">Register Student RFID Tag →</button>
+                <a href="index.html" class="kiosk-btn-outline">View Live Water Status →</a>
             </div>
         </div>
 
         <div class="grid-3">
             <div class="kiosk-card">
-                <div class="feature-icon">01</div>
-                <h3 class="card-title">Solar Thermoelectric Cooling</h3>
-                <p class="card-desc">Powered by renewable solar energy and MPPT charging controllers, maintaining an optimal chilled reservoir temperature.</p>
+                <div class="feature-icon">💧</div>
+                <h3 class="card-title">Solid-State TEC Cooling</h3>
+                <p class="card-desc">Maintains optimal chilled water temperatures using eco-friendly Peltier modules coupled to an insulated copper reservoir.</p>
             </div>
             <div class="kiosk-card">
-                <div class="feature-icon">02</div>
-                <h3 class="card-title">RFID Fair-Share Governance</h3>
-                <p class="card-desc">Equipped with MFRC522 readers to enforce equitable volumetric limits (500mL per tap) and user cooldown timers.</p>
+                <div class="feature-icon">⚡</div>
+                <h3 class="card-title">Fair-Share Governance</h3>
+                <p class="card-desc">Enforces strict 500mL volumetric allocations via flow metering and cooldown periods to prevent resource overuse.</p>
             </div>
             <div class="kiosk-card">
-                <div class="feature-icon">03</div>
-                <h3 class="card-title">Edge Local Area Network</h3>
-                <p class="card-desc">Operates completely offline over a secure LAN architecture, logging transactions locally on the microcontroller.</p>
+                <div class="feature-icon">☀️</div>
+                <h3 class="card-title">100% Off-Grid Solar</h3>
+                <p class="card-desc">Powered entirely by photovoltaic energy and deep-cycle battery storage for continuous campus reliability.</p>
             </div>
         </div>
     </main>
 
+    <!-- Two-Step Registration Modal -->
+    <div id="registration-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="card-title">Student RFID Registration</h3>
+                <button onclick="closeRegistrationModal()" class="nav-pill-link" style="font-size: 1rem; color: var(--text-primary);">✕</button>
+            </div>
+            <div class="modal-body-stack">
+                <p class="card-desc">Enter your full name and student number for double-verification against university records before tapping your ID card.</p>
+                <div>
+                    <label class="metric-label">Full Name (As shown on Student ID)</label>
+                    <input type="text" id="reg-full-name" placeholder="e.g., Reyes, Beverly Miles G." class="kiosk-input" style="margin-top: 0.4rem;">
+                </div>
+                <div>
+                    <label class="metric-label">PUP Student Number</label>
+                    <input type="text" id="reg-student-no" placeholder="e.g., 2024-00123-MN-0" class="kiosk-input" style="margin-top: 0.4rem;">
+                </div>
+                <button onclick="verifyAndRegisterCard()" id="reg-action-btn" class="kiosk-btn" style="width: 100%;">Verify Records & Tap Card</button>
+                <div id="reg-status-message" class="text-active" style="text-align: center; display: none;">Verifying student credentials against database...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Portal Secure Login Modal -->
+    <div id="staff-login-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="card-title">Admin Portal Secure Login</h3>
+                <button onclick="closeStaffLoginModal()" class="nav-pill-link" style="font-size: 1rem; color: var(--text-primary);">✕</button>
+            </div>
+            <div class="modal-body-stack">
+                <p class="card-desc">Enter your administrator credentials to securely log in and access system management.</p>
+                <div>
+                    <label class="metric-label">Username</label>
+                    <input type="text" id="staff-username" placeholder="Enter username" class="kiosk-input" style="margin-top: 0.4rem;">
+                </div>
+                <div>
+                    <label class="metric-label">Password</label>
+                    <input type="password" id="staff-password" placeholder="Enter password" class="kiosk-input" style="margin-top: 0.4rem;">
+                </div>
+                <button onclick="submitStaffLogin()" class="kiosk-btn" style="width: 100%; margin-top: 0.5rem;">Secure Sign In</button>
+            </div>
+        </div>
+    </div>
+
     <footer>
-        <p>PUP Computer Engineering Thesis Project • Solar Thermoelectric Water-Cooling & RFID Resource Management</p>
+        <p>Polytechnic University of the Philippines • Department of Computer Engineering</p>
     </footer>
 
-    <script>
-        function toggleMobileMenu() {
-            document.getElementById('mobile-menu').classList.toggle('active');
-        }
-    </script>
+    <script src="js/dashboard.js"></script>
 </body>
 </html>
