@@ -20,11 +20,16 @@ function closeRegistrationModal() {
 }
 
 function openStaffLoginModal() {
+    // If already logged in, go straight to the admin portal without asking for password
+    if (localStorage.getItem('isAdminAuthenticated') === 'true') {
+        window.location.href = 'admin.html';
+        return;
+    }
+
     const modal = document.getElementById('staff-login-modal');
     if (modal) {
         modal.classList.remove('hidden');
     } else {
-        // If modal isn't present on the current page, redirect to home where it lives
         window.location.href = 'dashboard.html';
     }
 }
@@ -71,7 +76,6 @@ function verifyAndRegisterCard() {
         }
     })
     .catch(() => {
-        // Fallback simulation for offline bench testing
         setTimeout(() => {
             statusEl.textContent = `Verified! Please tap your ID card on the reader now...`;
             btnEl.textContent = "Listening for Card Tap...";
@@ -120,14 +124,20 @@ function submitStaffLogin() {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
+                localStorage.setItem('isAdminAuthenticated', 'true');
                 window.location.href = 'admin.html';
             } else {
                 alert('Invalid username or password.');
             }
         })
         .catch(() => {
-            // Default offline fallback for defense demonstration
-            if (username === 'admin' && (password === '1234' || hashedPassword)) {
+            // Check against stored custom credentials or fall back to defaults
+            const savedUser = localStorage.getItem('adminUsername') || 'admin';
+            const savedPass = localStorage.getItem('adminPassword') || '1234';
+            const savedHash = localStorage.getItem('adminPasswordHash');
+
+            if (username === savedUser && (password === savedPass || hashedPassword === savedHash || (savedUser === 'admin' && password === '1234'))) {
+                localStorage.setItem('isAdminAuthenticated', 'true');
                 window.location.href = 'admin.html';
             } else {
                 alert('Authentication failed.');

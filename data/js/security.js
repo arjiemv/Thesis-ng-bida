@@ -46,6 +46,11 @@ function updateEncryptedCredentials() {
         const currentHash = Array.from(new Uint8Array(currentBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
         const newHash = Array.from(new Uint8Array(newBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
 
+        // Save new credentials locally so they persist across logins
+        localStorage.setItem('adminUsername', newUser);
+        localStorage.setItem('adminPassword', newPass);
+        localStorage.setItem('adminPasswordHash', newHash);
+
         fetch('/api/security/update', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

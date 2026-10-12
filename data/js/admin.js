@@ -1,6 +1,17 @@
 // Admin Portal Station Management & RFID Management Controller
 
 window.addEventListener('DOMContentLoaded', () => {
+    // Session Guard Check
+    const currentPage = window.location.pathname.split('/').pop();
+    const protectedPages = ['admin.html', 'security.html'];
+    
+    if (protectedPages.includes(currentPage)) {
+        if (localStorage.getItem('isAdminAuthenticated') !== 'true') {
+            window.location.href = 'dashboard.html';
+            return;
+        }
+    }
+
     if (localStorage.getItem('theme') === 'light') {
         document.body.classList.add('light-mode');
         const btn = document.getElementById('theme-toggle-btn');
@@ -8,6 +19,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     loadRegisteredStudents();
 });
+
+function logoutAdmin() {
+    localStorage.removeItem('isAdminAuthenticated');
+    window.location.href = 'dashboard.html';
+}
 
 function toggleRfidModal(show) {
     const modal = document.getElementById('rfid-modal');
@@ -94,7 +110,6 @@ function loadRegisteredStudents() {
 }
 
 function revokeCard(uid) {
-    // Professional confirmation prompt before sending request
     if (confirm(`Are you sure you want to permanently revoke RFID card UID: ${uid}? This will immediately bar access to the hydration kiosk.`)) {
         fetch('/api/rfid/revoke', {
             method: 'POST',
