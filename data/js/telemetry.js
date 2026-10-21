@@ -1,65 +1,28 @@
-// Live Telemetry, Charts, and Dynamic ESP32 Status Controller
+// Live Telemetry, Hardware Measured Counters, Solar Advisory & Anonymized Activity Controller
 
-let tempChart = null;
-let powerChart = null;
+function updateSolarAdvisory(batteryVoltage, isCharging, waterTemp) {
+    const cardEl = document.getElementById('solar-advisory-card');
+    const badgeEl = document.getElementById('advisory-badge');
+    const msgEl = document.getElementById('advisory-message');
+    const iconEl = document.getElementById('advisory-icon');
 
-function initializeCharts() {
-    const tempCanvas = document.getElementById('tempChart');
-    if (tempCanvas) {
-        const tempCtx = tempCanvas.getContext('2d');
-        tempChart = new Chart(tempCtx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Water Temperature (°C)',
-                    data: [],
-                    borderColor: '#38bdf8',
-                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
-                },
-                plugins: { legend: { display: false } }
-            }
-        });
-    }
+    if (!cardEl || !badgeEl || !msgEl) return;
 
-    const powerCanvas = document.getElementById('powerChart');
-    if (powerCanvas) {
-        const powerCtx = powerCanvas.getContext('2d');
-        powerChart = new Chart(powerCtx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Power Usage (Wh)',
-                    data: [],
-                    borderColor: '#0284c7',
-                    backgroundColor: 'rgba(2, 132, 199, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
-                },
-                plugins: { legend: { display: false } }
-            }
-        });
+    if (batteryVoltage !== undefined && batteryVoltage < 11.8 && !isCharging) {
+        cardEl.className = "advisory-inline advisory-warning mt-4";
+        badgeEl.textContent = "⛅ Low Solar Reserve Advisory";
+        msgEl.textContent = "Overcast climate or low battery detected. Cooling operating in eco-mode.";
+        if (iconEl) iconEl.textContent = "🔋";
+    } else if (waterTemp !== undefined && waterTemp > 17.0) {
+        cardEl.className = "advisory-inline advisory-warning mt-4";
+        badgeEl.textContent = "🌡️ Heavy Refill Demand";
+        msgEl.textContent = "High student usage. Water is currently at " + waterTemp.toFixed(1) + "°C and actively chilling back down.";
+        if (iconEl) iconEl.textContent = "💧";
+    } else {
+        cardEl.className = "advisory-inline advisory-optimal mt-4";
+        badgeEl.textContent = "☀️ 100% Solar Powered & Chilled";
+        msgEl.textContent = "Station is running on full solar power. Water is actively chilled at 15°C.";
+        if (iconEl) iconEl.textContent = "⚡";
     }
 }
 
@@ -68,33 +31,53 @@ function fetchLiveTelemetry() {
     .then(res => res.json())
     .then(data => {
         const waterTempEl = document.getElementById('water-temp');
-        const ambientTempEl = document.getElementById('ambient-temp');
-        const batteryVoltageEl = document.getElementById('battery-voltage');
+        const batteryPercentEl = document.getElementById('battery-percent');
         const solarStatusEl = document.getElementById('solar-status-label');
         const waterLevelEl = document.getElementById('water-level');
         const valveStateEl = document.getElementById('valve-state-label');
         const systemStatusEl = document.getElementById('system-status-text');
-        const coolingStateEl = document.getElementById('cooling-state-label');
+        const bottlesSavedEl = document.getElementById('bottles-saved-today');
+        const ecoLitersEl = document.getElementById('eco-liters-val');
+        const ecoTapsEl = document.getElementById('eco-taps-val');
 
-        if (waterTempEl && data.waterTemp !== undefined) waterTempEl.textContent = data.waterTemp.toFixed(1) + " °C";
-        if (ambientTempEl && data.ambientTemp !== undefined) ambientTempEl.textContent = data.ambientTemp.toFixed(1) + " °C";
-        if (batteryVoltageEl && data.batteryVoltage !== undefined) batteryVoltageEl.textContent = data.batteryVoltage.toFixed(2) + " V";
-        if (solarStatusEl && data.isCharging !== undefined) solarStatusEl.textContent = data.isCharging ? "Charging" : "Standby";
-        if (waterLevelEl && data.waterLevel !== undefined) waterLevelEl.textContent = data.waterLevel + "%";
-        if (valveStateEl && data.waterLevel !== undefined) valveStateEl.textContent = data.waterLevel > 10 ? "Ready" : "Low Water";
-        if (systemStatusEl) systemStatusEl.textContent = data.systemStatus || "Fully Operational";
-        if (coolingStateEl && data.coolingState) coolingStateEl.textContent = "Cooling: " + data.coolingState;
-        
-        const currentTime = new Date().toLocaleTimeString();
-        if (tempChart && data.waterTemp !== undefined) {
-            if (tempChart.data.labels.length > 15) {
-                tempChart.data.labels.shift();
-                tempChart.data.datasets[0].data.shift();
-            }
-            tempChart.data.labels.push(currentTime);
-            tempChart.data.datasets[0].data.push(data.waterTemp);
-            tempChart.update('none');
+        if (waterTempEl && data.waterTemp !== undefined) {
+            waterTempEl.textContent = data.waterTemp.toFixed(1) + " °C";
         }
+        
+        // Calculate Battery Charge Percentage (11.0V = 0%, 12.8V = 100%)
+        if (batteryPercentEl && data.batteryVoltage !== undefined) {
+            const chargePercent = Math.min(100, Math.max(0, Math.round(((data.batteryVoltage - 11.0) / 1.8) * 100)));
+            batteryPercentEl.textContent = chargePercent + "%";
+        }
+
+        if (solarStatusEl && data.isCharging !== undefined) {
+            solarStatusEl.textContent = data.isCharging ? "☀️ Solar Active" : "🔋 Battery Mode";
+            solarStatusEl.className = data.isCharging ? "status-pill status-pill-green" : "status-pill status-pill-amber";
+        }
+
+        if (waterLevelEl && data.waterLevel !== undefined) {
+            waterLevelEl.textContent = data.waterLevel + "%";
+        }
+
+        if (valveStateEl && data.waterLevel !== undefined) {
+            valveStateEl.textContent = data.waterLevel > 10 ? "Ready" : "Low Supply";
+            valveStateEl.className = data.waterLevel > 10 ? "status-pill status-pill-cyan" : "status-pill status-pill-amber";
+        }
+
+        if (systemStatusEl) {
+            systemStatusEl.textContent = data.systemStatus || "Fully Operational";
+        }
+
+        // Bind 100% Measured Hardware Telemetry (Flow Sensor Liters & RFID Scan Count)
+        if (data.totalLiters !== undefined) {
+            const calculatedBottles = Math.floor((data.totalLiters * 1000) / 500);
+
+            if (bottlesSavedEl) bottlesSavedEl.textContent = calculatedBottles.toLocaleString();
+            if (ecoLitersEl) ecoLitersEl.textContent = data.totalLiters.toFixed(1) + " L";
+            if (ecoTapsEl) ecoTapsEl.textContent = (data.todayTapsCount !== undefined ? data.todayTapsCount : calculatedBottles).toLocaleString();
+        }
+
+        updateSolarAdvisory(data.batteryVoltage, data.isCharging, data.waterTemp);
     })
     .catch(() => {
         const systemStatusEl = document.getElementById('system-status-text');
@@ -102,19 +85,39 @@ function fetchLiveTelemetry() {
     });
 }
 
+function anonymizeIdentifier(identifier) {
+    if (!identifier) return "Anonymous Student";
+    if (identifier.includes("-")) {
+        const parts = identifier.split("-");
+        if (parts.length >= 3) {
+            return `${parts[0]}-****-${parts[parts.length - 2]}-${parts[parts.length - 1]}`;
+        }
+    }
+    if (identifier.length > 4) {
+        return identifier.substring(0, 3) + "****" + identifier.substring(identifier.length - 2);
+    }
+    return "Student ****";
+}
+
 function refreshLogs() {
     fetch('/api/logs')
     .then(res => res.json())
     .then(logs => {
         const tbody = document.getElementById('logTableBody');
-        if (!tbody || !logs || logs.length === 0) return;
+        if (!tbody || !logs) return;
         
         tbody.innerHTML = '';
+        if (logs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="card-desc text-center">No recent hydration activity recorded.</td></tr>`;
+            return;
+        }
+
         logs.forEach(log => {
+            const anonUser = anonymizeIdentifier(log.studentNo || log.uid);
             tbody.innerHTML += `
                 <tr>
                     <td>${log.timestamp}</td>
-                    <td class="text-mono text-cyan">${log.studentNo}</td>
+                    <td><span class="badge-anon">${anonUser}</span></td>
                     <td>${log.volume} mL</td>
                     <td><span class="text-active">${log.status}</span></td>
                 </tr>`;
@@ -124,7 +127,6 @@ function refreshLogs() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    initializeCharts();
     fetchLiveTelemetry();
     refreshLogs();
 

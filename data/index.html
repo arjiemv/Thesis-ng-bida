@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Water Status — Solar Thermoelectric Water-Cooling System</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <header>
@@ -15,108 +14,145 @@
             <nav class="nav-pill-container">
                 <a href="dashboard.html" class="nav-pill-link">Home</a>
                 <a href="index.html" class="nav-pill-link active">Water Status</a>
-                <button onclick="openStaffLoginModal()" class="nav-pill-link" style="color: var(--accent-cyan); background: transparent; border: none; cursor: pointer;">Admin Portal</button>
+                <button onclick="openStaffLoginModal()" class="nav-pill-link btn-nav-portal">Admin Portal</button>
             </nav>
 
             <div class="header-right-group">
-                <button onclick="toggleTheme()" class="kiosk-btn-outline" style="padding: 0.45rem 0.9rem; font-size: 0.7rem;" id="theme-toggle-btn">☀️ Light Mode</button>
+                <button onclick="toggleTheme()" class="kiosk-btn-outline btn-theme" id="theme-toggle-btn">☀️ Light Mode</button>
                 <div class="status-badge"><span class="status-dot"></span><span id="esp-status-text">Connected</span></div>
             </div>
         </div>
     </header>
 
     <main class="container telemetry-wrapper">
-        <div class="kiosk-card flex-between">
-            <div>
-                <h2 class="section-title">Live Water Status & Health</h2>
-                <p class="card-desc">Real-time water temperature, cleanliness checks, solar battery levels, and recent dispensing activity.</p>
-            </div>
-            <div class="badge-status">Status: <span id="system-status-text" class="text-cyan">Synchronizing...</span></div>
-        </div>
-
-        <div class="grid-4">
-            <div class="kiosk-card">
-                <p class="metric-label">Water Temperature</p>
-                <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 0.5rem;">
-                    <span id="water-temp" class="metric-value text-cyan">-- °C</span>
-                    <span class="card-desc">Target: 15°C</span>
-                </div>
-            </div>
-            <div class="kiosk-card">
-                <p class="metric-label">Climate & Heat</p>
-                <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 0.5rem;">
-                    <span id="ambient-temp" class="metric-value">-- °C</span>
-                    <span class="card-desc" id="cooling-state-label">Cooling: --</span>
-                </div>
-            </div>
-            <div class="kiosk-card">
-                <p class="metric-label">Solar Battery</p>
-                <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 0.5rem;">
-                    <span id="battery-voltage" class="metric-value text-cyan">-- V</span>
-                    <span id="solar-status-label" class="text-active">--</span>
-                </div>
-            </div>
-            <div class="kiosk-card">
-                <p class="metric-label">Water Tank</p>
-                <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 0.5rem;">
-                    <span id="water-level" class="metric-value text-cyan">--%</span>
-                    <span class="card-desc" id="valve-state-label">--</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid-2">
-            <div class="kiosk-card">
-                <h3 class="card-title">Water Temperature Control Stability (°C)</h3>
-                <div style="height: 250px; margin-top: 1rem;"><canvas id="tempChart"></canvas></div>
-            </div>
-            <div class="kiosk-card">
-                <h3 class="card-title">Solar Energy & Power Usage (Wh)</h3>
-                <div style="height: 250px; margin-top: 1rem;"><canvas id="powerChart"></canvas></div>
-            </div>
-        </div>
-
+        <!-- Live Station Header & Integrated Solar Alert -->
         <div class="kiosk-card">
             <div class="flex-between">
-                <h3 class="card-title">Recent Refill Activity Log</h3>
-                <button onclick="refreshLogs()" class="kiosk-btn">Refresh Activity</button>
+                <div>
+                    <h2 class="section-title">Live Water Status & Health</h2>
+                    <p class="card-desc">Real-time water temperature, solar energy reserves, station availability, and campus sustainability metrics.</p>
+                </div>
+                <div class="badge-status">Status: <span id="system-status-text" class="text-cyan">Fully Operational</span></div>
             </div>
-            <div class="table-container" style="margin-top: 1rem;">
+
+            <div id="solar-advisory-card" class="advisory-inline advisory-optimal mt-4">
+                <div class="advisory-icon-wrapper" id="advisory-icon">⚡</div>
+                <div class="advisory-text-body">
+                    <span id="advisory-badge" class="advisory-title">☀️ Optimal Solar Storage</span>
+                    <span id="advisory-message" class="advisory-sub">Station is running on full solar power. Water is actively chilled at 15°C.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- High-Impact Eco-Impact Showcase Card (100% Measured Hardware Telemetry) -->
+        <div class="kiosk-card eco-hero-card">
+            <div class="eco-hero-header">
+                <span class="eco-badge"><span class="pulse-leaf">🌱</span> Campus Environmental Impact</span>
+                <a href="dashboard.html" class="kiosk-btn-outline btn-outline-green">Our Sustainability Mission →</a>
+            </div>
+
+            <div class="eco-hero-body">
+                <!-- Glowing Primary Counter Focus -->
+                <div class="eco-counter-box">
+                    <div class="eco-number-glow" id="bottles-saved-today">0</div>
+                    <div class="eco-counter-label">
+                        <span class="eco-main-text">Single-Use Plastic Bottles Saved</span>
+                        <span class="eco-sub-text">500 mL Plastic Bottles Offset On Campus Today</span>
+                    </div>
+                </div>
+
+                <!-- 100% Measured Hardware Metrics Stack -->
+                <div class="eco-stats-stack">
+                    <div class="eco-mini-stat">
+                        <div class="stat-icon-box">💧</div>
+                        <div>
+                            <span class="stat-value text-cyan" id="eco-liters-val">0.0 L</span>
+                            <span class="stat-label">Chilled Water Served</span>
+                        </div>
+                    </div>
+                    <div class="eco-mini-stat">
+                        <div class="stat-icon-box">💳</div>
+                        <div>
+                            <span class="stat-value text-green" id="eco-taps-val">0</span>
+                            <span class="stat-label">RFID Student Taps Today</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clean 3-Card Hardware Grid -->
+        <div class="grid-3">
+            <div class="kiosk-card">
+                <p class="metric-label">Water Temp</p>
+                <div class="flex-between mt-2">
+                    <span id="water-temp" class="metric-value text-cyan">-- °C</span>
+                    <span class="status-pill status-pill-cyan">Target: 15°C</span>
+                </div>
+            </div>
+
+            <div class="kiosk-card">
+                <p class="metric-label">Solar Power Reserve</p>
+                <div class="flex-between mt-2">
+                    <span id="battery-percent" class="metric-value text-cyan">--%</span>
+                    <span id="solar-status-label" class="status-pill status-pill-green">☀️ Solar Active</span>
+                </div>
+            </div>
+
+            <div class="kiosk-card">
+                <p class="metric-label">Water Tank Supply</p>
+                <div class="flex-between mt-2">
+                    <span id="water-level" class="metric-value text-cyan">--%</span>
+                    <span id="valve-state-label" class="status-pill status-pill-cyan">Ready</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Anonymized Activity Table -->
+        <div class="kiosk-card">
+            <div class="flex-between">
+                <div>
+                    <h3 class="card-title">Recent Hydration Activity Log</h3>
+                    <p class="card-desc">Anonymized dispensing activity log for public verification and privacy protection.</p>
+                </div>
+                <button onclick="refreshLogs()" class="kiosk-btn">Refresh Logs</button>
+            </div>
+            <div class="table-container mt-4">
                 <table class="kiosk-table">
                     <thead>
                         <tr>
                             <th>Time</th>
-                            <th>Student ID</th>
+                            <th>User Identifier</th>
                             <th>Water Dispensed</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody id="logTableBody">
-                        <!-- Populated dynamically via js/telemetry.js -->
+                        <!-- Dynamic Anonymized Logs via js/telemetry.js -->
                     </tbody>
                 </table>
             </div>
         </div>
     </main>
 
-    <!-- Admin Portal Secure Login Modal for Index Page -->
+    <!-- Admin Portal Secure Login Modal -->
     <div id="staff-login-modal" class="modal-overlay hidden">
         <div class="modal-box">
             <div class="modal-header">
                 <h3 class="card-title">Admin Portal Secure Login</h3>
-                <button onclick="closeStaffLoginModal()" class="nav-pill-link" style="font-size: 1rem; color: var(--text-primary);">✕</button>
+                <button onclick="closeStaffLoginModal()" class="nav-pill-link btn-nav-close">✕</button>
             </div>
             <div class="modal-body-stack">
                 <p class="card-desc">Enter your administrator credentials to securely log in and access system management.</p>
                 <div>
                     <label class="metric-label">Username</label>
-                    <input type="text" id="staff-username" placeholder="Enter username" class="kiosk-input" style="margin-top: 0.4rem;">
+                    <input type="text" id="staff-username" placeholder="Enter username" class="kiosk-input mt-1">
                 </div>
                 <div>
                     <label class="metric-label">Password</label>
-                    <input type="password" id="staff-password" placeholder="Enter password" class="kiosk-input" style="margin-top: 0.4rem;">
+                    <input type="password" id="staff-password" placeholder="Enter password" class="kiosk-input mt-1">
                 </div>
-                <button onclick="submitStaffLogin()" class="kiosk-btn" style="width: 100%; margin-top: 0.5rem;">Secure Sign In</button>
+                <button onclick="submitStaffLogin()" class="kiosk-btn w-full mt-2">Secure Sign In</button>
             </div>
         </div>
     </div>

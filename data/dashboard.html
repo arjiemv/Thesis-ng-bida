@@ -16,11 +16,11 @@
             <nav class="nav-pill-container">
                 <a href="dashboard.html" class="nav-pill-link active">Home</a>
                 <a href="index.html" class="nav-pill-link">Water Status</a>
-                <button onclick="openStaffLoginModal()" class="nav-pill-link" style="color: var(--accent-cyan); background: transparent; border: none; cursor: pointer;">Admin Portal</button>
+                <button onclick="openStaffLoginModal()" class="nav-pill-link btn-nav-portal">Admin Portal</button>
             </nav>
 
             <div class="header-right-group">
-                <button onclick="toggleTheme()" class="kiosk-btn-outline" style="padding: 0.45rem 0.9rem; font-size: 0.7rem;" id="theme-toggle-btn">☀️ Light Mode</button>
+                <button onclick="toggleTheme()" class="kiosk-btn-outline btn-theme" id="theme-toggle-btn">☀️ Light Mode</button>
                 <div class="status-badge"><span class="status-dot"></span><span id="header-status">Online</span></div>
             </div>
         </div>
@@ -33,11 +33,25 @@
                 Solar Thermoelectric Water-Cooling & <span class="text-cyan">RFID Resource Management System</span>
             </h2>
             <p class="hero-text">
-                Welcome to PUP Hydration Station! Simply tap your registered student ID to enjoy free, chilled drinking water powered by solar energy.
+                Welcome to PUP Hydration Station! Verify your student record and tap your ID to enjoy free, chilled drinking water powered by 100% solar energy.
             </p>
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+
+            <!-- Sustainability Campaign Card -->
+            <div class="kiosk-card campaign-card">
+                <div class="flex-between">
+                    <div>
+                        <span class="metric-label campaign-tag">🌱 Did You Know?</span>
+                        <p class="card-desc campaign-text">
+                            Single-use plastic water bottles take over 450 years to decompose. Every tumbler refilled at this solar station reduces campus plastic waste and saves solar grid energy!
+                        </p>
+                    </div>
+                    <a href="index.html" class="kiosk-btn-outline btn-outline-green">View Live Bottles Saved →</a>
+                </div>
+            </div>
+
+            <div class="flex-between">
                 <button onclick="openRegistrationModal()" class="kiosk-btn">Register Student RFID Tag →</button>
-                <a href="index.html" class="kiosk-btn-outline">View Live Water Status →</a>
+                <a href="index.html" class="kiosk-btn-outline">View Water Telemetry →</a>
             </div>
         </div>
 
@@ -60,25 +74,25 @@
         </div>
     </main>
 
-    <!-- Two-Step Registration Modal -->
+    <!-- Strict Two-Step Verification & Registration Modal -->
     <div id="registration-modal" class="modal-overlay hidden">
         <div class="modal-box">
             <div class="modal-header">
-                <h3 class="card-title">Student RFID Registration</h3>
-                <button onclick="closeRegistrationModal()" class="nav-pill-link" style="font-size: 1rem; color: var(--text-primary);">✕</button>
+                <h3 class="card-title">Student RFID Pre-Registration</h3>
+                <button onclick="closeRegistrationModal()" class="nav-pill-link btn-nav-close">✕</button>
             </div>
             <div class="modal-body-stack">
-                <p class="card-desc">Enter your full name and student number for double-verification against university records before tapping your ID card.</p>
+                <p class="card-desc">Enter your credentials below. The kiosk will verify your details against official university records before allowing card scanning.</p>
                 <div>
                     <label class="metric-label">Full Name (As shown on Student ID)</label>
-                    <input type="text" id="reg-full-name" placeholder="e.g., Reyes, Beverly Miles G." class="kiosk-input" style="margin-top: 0.4rem;">
+                    <input type="text" id="reg-full-name" placeholder="e.g., Reyes, Beverly Miles G." class="kiosk-input mt-1">
                 </div>
                 <div>
                     <label class="metric-label">PUP Student Number</label>
-                    <input type="text" id="reg-student-no" placeholder="e.g., 2024-00123-MN-0" class="kiosk-input" style="margin-top: 0.4rem;">
+                    <input type="text" id="reg-student-no" placeholder="e.g., 2024-00123-MN-0" class="kiosk-input mt-1">
                 </div>
-                <button onclick="verifyAndRegisterCard()" id="reg-action-btn" class="kiosk-btn" style="width: 100%;">Verify Records & Tap Card</button>
-                <div id="reg-status-message" class="text-active" style="text-align: center; display: none;">Verifying student credentials against database...</div>
+                <button onclick="verifyAndRegisterCard()" id="reg-action-btn" class="kiosk-btn w-full">Verify School Database</button>
+                <div id="reg-status-message" class="text-cyan text-center hidden"></div>
             </div>
         </div>
     </div>
@@ -88,19 +102,19 @@
         <div class="modal-box">
             <div class="modal-header">
                 <h3 class="card-title">Admin Portal Secure Login</h3>
-                <button onclick="closeStaffLoginModal()" class="nav-pill-link" style="font-size: 1rem; color: var(--text-primary);">✕</button>
+                <button onclick="closeStaffLoginModal()" class="nav-pill-link btn-nav-close">✕</button>
             </div>
             <div class="modal-body-stack">
                 <p class="card-desc">Enter your administrator credentials to securely log in and access system management.</p>
                 <div>
                     <label class="metric-label">Username</label>
-                    <input type="text" id="staff-username" placeholder="Enter username" class="kiosk-input" style="margin-top: 0.4rem;">
+                    <input type="text" id="staff-username" placeholder="Enter username" class="kiosk-input mt-1">
                 </div>
                 <div>
                     <label class="metric-label">Password</label>
-                    <input type="password" id="staff-password" placeholder="Enter password" class="kiosk-input" style="margin-top: 0.4rem;">
+                    <input type="password" id="staff-password" placeholder="Enter password" class="kiosk-input mt-1">
                 </div>
-                <button onclick="submitStaffLogin()" class="kiosk-btn" style="width: 100%; margin-top: 0.5rem;">Secure Sign In</button>
+                <button onclick="submitStaffLogin()" class="kiosk-btn w-full mt-2">Secure Sign In</button>
             </div>
         </div>
     </div>

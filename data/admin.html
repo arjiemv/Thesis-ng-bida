@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PUP Hydration Kiosk — Admin Portal</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div id="alert-modal" class="modal-overlay hidden">
-        <div class="modal-box" style="text-align: center;">
-            <div class="feature-icon" style="margin: 0 auto 1.25rem auto;">✓</div>
+        <div class="modal-box modal-alert-box">
+            <div class="feature-icon icon-margin">✓</div>
             <h3 id="alert-title" class="card-title">Notice</h3>
-            <p id="alert-message" class="card-desc" style="margin-bottom: 1.75rem;">Action completed successfully.</p>
+            <p id="alert-message" class="card-desc mb-3">Action completed successfully.</p>
             <button onclick="closeAlertModal()" class="kiosk-btn">Okay</button>
         </div>
     </div>
@@ -20,22 +21,22 @@
         <div class="modal-box">
             <div class="modal-header">
                 <h3 class="card-title">Register Student ID Tag</h3>
-                <button onclick="toggleRfidModal(false)" class="nav-pill-link" style="font-size: 1rem; color: var(--text-primary);">✕</button>
+                <button onclick="toggleRfidModal(false)" class="nav-pill-link btn-nav-close">✕</button>
             </div>
             <div class="modal-body-stack">
                 <div>
                     <label class="metric-label">Student Full Name</label>
-                    <input type="text" id="new-name" placeholder="e.g., Reyes, Beverly Miles G." class="kiosk-input" style="margin-top: 0.4rem;">
+                    <input type="text" id="new-name" placeholder="e.g., Reyes, Beverly Miles G." class="kiosk-input mt-1">
                 </div>
                 <div>
                     <label class="metric-label">Student Number</label>
-                    <input type="text" id="new-student-no" placeholder="e.g., 2024-00123-MN-0" class="kiosk-input" style="margin-top: 0.4rem;">
+                    <input type="text" id="new-student-no" placeholder="e.g., 2024-00123-MN-0" class="kiosk-input mt-1">
                 </div>
                 <div>
                     <label class="metric-label">RFID Card UID (Tap Card on Reader)</label>
-                    <input type="text" id="new-uid" placeholder="Waiting for card tap..." class="kiosk-input text-mono" style="margin-top: 0.4rem;" readonly>
+                    <input type="text" id="new-uid" placeholder="Waiting for card tap..." class="kiosk-input text-mono mt-1" readonly>
                 </div>
-                <button onclick="saveNewRfidCard()" class="kiosk-btn" style="margin-top: 0.5rem; width: 100%;">Save to Station Database</button>
+                <button onclick="saveNewRfidCard()" class="kiosk-btn mt-2 w-full">Save to Station Database</button>
             </div>
         </div>
     </div>
@@ -51,59 +52,102 @@
             </nav>
 
             <div class="header-right-group">
-                <a href="security.html" class="kiosk-btn-outline" style="padding: 0.45rem 0.9rem; font-size: 0.7rem; color: var(--accent-cyan); border-color: var(--accent-cyan);">🔒 Security</a>
-                <button onclick="toggleTheme()" class="kiosk-btn-outline" style="padding: 0.45rem 0.9rem; font-size: 0.7rem;" id="theme-toggle-btn">☀️ Light</button>
-                <button onclick="logoutAdmin()" class="kiosk-btn-outline" style="padding: 0.45rem 0.9rem; font-size: 0.7rem; color: #f43f5e; border-color: #f43f5e;">Log Out</button>
+                <a href="security.html" class="kiosk-btn-outline btn-security">🔒 Security</a>
+                <button onclick="toggleTheme()" class="kiosk-btn-outline btn-theme" id="theme-toggle-btn">☀️ Light</button>
+                <button onclick="logoutAdmin()" class="kiosk-btn-outline btn-logout">Log Out</button>
             </div>
         </div>
     </header>
 
     <main class="container telemetry-wrapper">
+        <!-- Admin Station Telemetry Analytics, Heat Load & Filter Health Bar -->
         <div class="kiosk-card">
-            <div class="flex-between">
+            <div class="flex-between mb-3">
                 <div>
-                    <h2 class="section-title">Station Settings & Management</h2>
-                    <p class="card-desc">Configure water serving limits, cooldown times, and manage registered student ID cards.</p>
+                    <h2 class="section-title">Kiosk Usage Analytics & Filter Health</h2>
+                    <p class="card-desc">Comprehensive telemetry gathering: climate heat load, peak hours, cumulative volume, and filter lifespan.</p>
                 </div>
-                <a href="security.html" class="kiosk-btn-outline">Go to Security Settings →</a>
+                <button onclick="resetFilterLifespan()" class="kiosk-btn-outline btn-security">Reset Filter Life</button>
+            </div>
+            
+            <div class="grid-4 mb-3">
+                <div>
+                    <span class="metric-label">Total Water Dispensed</span>
+                    <p id="admin-total-volume" class="metric-value text-cyan">-- L</p>
+                </div>
+                <div>
+                    <span class="metric-label">Peak Usage Time Window</span>
+                    <p id="admin-peak-hours" class="metric-value text-cyan" style="font-size: 1.6rem;">--</p>
+                </div>
+                <div>
+                    <span class="metric-label">Ambient Climate Heat</span>
+                    <p id="admin-ambient-temp" class="metric-value text-cyan">-- °C</p>
+                </div>
+                <div>
+                    <span class="metric-label">Filter Remaining</span>
+                    <p id="admin-filter-percent" class="metric-value text-cyan">--%</p>
+                </div>
+            </div>
+
+            <div>
+                <div class="flex-between mb-1">
+                    <span class="card-desc">Water Filter Capacity (<span id="filter-liters-text">0 / 5000 Liters</span>)</span>
+                    <span id="filter-status-badge" class="badge-anon">Filter Status: Optimal</span>
+                </div>
+                <!-- Dynamic Loading Bar for Filter Health -->
+                <div class="progress-bar-bg">
+                    <div id="filter-progress-bar" class="progress-bar-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Telemetry Charts (Admin Portal) -->
+        <div class="grid-2">
+            <div class="kiosk-card">
+                <h3 class="card-title">Water Temperature Control Stability (°C)</h3>
+                <div class="chart-box"><canvas id="tempChart"></canvas></div>
+            </div>
+            <div class="kiosk-card">
+                <h3 class="card-title">Solar Energy & Power Usage (Wh)</h3>
+                <div class="chart-box"><canvas id="powerChart"></canvas></div>
             </div>
         </div>
 
         <div class="grid-2">
             <div class="kiosk-card modal-body-stack">
-                <h3 class="card-title modal-header" style="margin-bottom: 0;">Dispensing Rules</h3>
+                <h3 class="card-title modal-header mb-0">Dispensing Rules</h3>
                 <div>
                     <label class="card-desc">Water Volume per Tap (mL)</label>
-                    <input type="number" id="volLimit" value="500" class="kiosk-input" style="margin-top: 0.4rem;">
+                    <input type="number" id="volLimit" value="500" class="kiosk-input mt-1">
                 </div>
                 <div>
                     <label class="card-desc">Cooldown Time Between Taps (Minutes)</label>
-                    <input type="number" id="cooldownTime" value="5" class="kiosk-input" style="margin-top: 0.4rem;">
+                    <input type="number" id="cooldownTime" value="5" class="kiosk-input mt-1">
                 </div>
                 <div>
                     <label class="card-desc">Target Water Temperature (°C)</label>
-                    <input type="number" step="0.1" id="tempSetpoint" value="15.0" class="kiosk-input" style="margin-top: 0.4rem;">
+                    <input type="number" step="0.1" id="tempSetpoint" value="15.0" class="kiosk-input mt-1">
                 </div>
                 <button onclick="saveSystemConfig()" class="kiosk-btn">Save Settings to Station</button>
             </div>
 
             <div class="kiosk-card modal-body-stack">
-                <h3 class="card-title modal-header" style="margin-bottom: 0;">Hardware Maintenance</h3>
-                <div class="modal-body-stack" style="gap: 0.6rem;">
+                <h3 class="card-title modal-header mb-0">Hardware Maintenance</h3>
+                <div class="modal-body-stack">
                     <div class="kiosk-card flex-between" style="padding: 0.8rem 1rem; background: var(--input-bg);">
-                        <div><p class="card-title" style="margin-bottom: 0; font-size: 1rem;">Water Valve</p><p class="card-desc">Test solenoid release</p></div>
+                        <div><p class="card-title mb-0">Water Valve</p><p class="card-desc">Test solenoid release</p></div>
                         <button onclick="testHardwareActuator('Valve')" class="kiosk-btn-outline" style="padding: 0.5rem 1rem;">Test</button>
                     </div>
                     <div class="kiosk-card flex-between" style="padding: 0.8rem 1rem; background: var(--input-bg);">
-                        <div><p class="card-title" style="margin-bottom: 0; font-size: 1rem;">Cooling Plates</p><p class="card-desc">Test TEC1-12706 modules</p></div>
+                        <div><p class="card-title mb-0">Cooling Plates</p><p class="card-desc">Test TEC1-12706 modules</p></div>
                         <button onclick="testHardwareActuator('Cooling')" class="kiosk-btn-outline" style="padding: 0.5rem 1rem;">Test</button>
                     </div>
                     <div class="kiosk-card flex-between" style="padding: 0.8rem 1rem; background: var(--input-bg);">
-                        <div><p class="card-title" style="margin-bottom: 0; font-size: 1rem;">Cooling Fans</p><p class="card-desc">Test heat sink airflow</p></div>
+                        <div><p class="card-title mb-0">Cooling Fans</p><p class="card-desc">Test heat sink airflow</p></div>
                         <button onclick="testHardwareActuator('Fans')" class="kiosk-btn-outline" style="padding: 0.5rem 1rem;">Test</button>
                     </div>
                     <div class="kiosk-card flex-between" style="padding: 0.8rem 1rem; background: var(--input-bg);">
-                        <div><p class="card-title" style="margin-bottom: 0; font-size: 1rem;">System Controller</p><p class="card-desc">Restart ESP32 node</p></div>
+                        <div><p class="card-title mb-0">System Controller</p><p class="card-desc">Restart ESP32 node</p></div>
                         <button onclick="testHardwareActuator('Reboot')" class="kiosk-btn reboot-btn" style="padding: 0.5rem 1rem;">Restart</button>
                     </div>
                 </div>
@@ -115,7 +159,7 @@
                 <h3 class="card-title">Registered Student ID Cards</h3>
                 <button onclick="toggleRfidModal(true)" class="kiosk-btn">+ Register New Student Tag</button>
             </div>
-            <div class="table-container" style="margin-top: 1.25rem;">
+            <div class="table-container mt-5">
                 <table class="kiosk-table">
                     <thead>
                         <tr>

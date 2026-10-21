@@ -1,4 +1,4 @@
-// Student RFID Self-Registration & Staff Login Modal Controller
+// Student Pre-Verification & Admin Login Controller
 
 function openRegistrationModal() {
     const modal = document.getElementById('registration-modal');
@@ -15,12 +15,17 @@ function closeRegistrationModal() {
     
     if (nameInput) nameInput.value = '';
     if (noInput) noInput.value = '';
-    if (statusMsg) statusMsg.style.display = 'none';
-    if (actionBtn) actionBtn.textContent = "Verify Records & Tap Card";
+    if (statusMsg) {
+        statusMsg.classList.add('hidden');
+        statusMsg.textContent = '';
+    }
+    if (actionBtn) {
+        actionBtn.textContent = "Verify School Database";
+        actionBtn.disabled = false;
+    }
 }
 
 function openStaffLoginModal() {
-    // If already logged in, go straight to the admin portal without asking for password
     if (localStorage.getItem('isAdminAuthenticated') === 'true') {
         window.location.href = 'admin.html';
         return;
@@ -48,16 +53,17 @@ function verifyAndRegisterCard() {
     const studentNo = document.getElementById('reg-student-no').value.trim();
     
     if (!fullName || !studentNo) {
-        alert('Please enter both your full name and student number for verification.');
+        alert('Please enter both your full name and student number for university verification.');
         return;
     }
 
     const statusEl = document.getElementById('reg-status-message');
     const btnEl = document.getElementById('reg-action-btn');
     
-    statusEl.style.display = 'block';
-    statusEl.textContent = "Checking name and student number against university records...";
-    btnEl.textContent = "Verifying Details...";
+    statusEl.classList.remove('hidden');
+    statusEl.textContent = "Verifying student records with university database...";
+    btnEl.textContent = "Checking Records...";
+    btnEl.disabled = true;
 
     fetch('/api/student/verify', {
         method: 'POST',
@@ -66,25 +72,24 @@ function verifyAndRegisterCard() {
     })
     .then(res => res.json())
     .then(data => {
-        if (data.status === 'valid') {
-            statusEl.textContent = `Matched: ${data.studentName} (${data.studentNo}). Please tap your ID card on the reader now...`;
-            btnEl.textContent = "Listening for Card Tap...";
-            listenForCardTap(studentNo);
+        if (data.status === 'valid' || data.success === true) {
+            statusEl.textContent = `Record Verified: ${fullName}. Tap your student RFID card on the reader now...`;
+            btnEl.textContent = "Listening for RFID Tap...";
+            listenForCardTap(studentNo, fullName);
         } else {
-            statusEl.textContent = "Name and student number do not match university records. Please check your spelling.";
-            btnEl.textContent = "Verify Records & Tap Card";
+            statusEl.textContent = "Verification Failed: Credentials do not match PUP school records.";
+            btnEl.textContent = "Verify School Database";
+            btnEl.disabled = false;
         }
     })
     .catch(() => {
-        setTimeout(() => {
-            statusEl.textContent = `Verified! Please tap your ID card on the reader now...`;
-            btnEl.textContent = "Listening for Card Tap...";
-            listenForCardTap(studentNo);
-        }, 1500);
+        statusEl.textContent = "Unable to connect to verification server. Please try again.";
+        btnEl.textContent = "Verify School Database";
+        btnEl.disabled = false;
     });
 }
 
-function listenForCardTap(studentNo) {
+function listenForCardTap(studentNo, fullName) {
     const statusEl = document.getElementById('reg-status-message');
     const btnEl = document.getElementById('reg-action-btn');
 
@@ -92,11 +97,11 @@ function listenForCardTap(studentNo) {
         fetch('/api/rfid/poll-tap')
         .then(res => res.json())
         .then(tapData => {
-            if (tapData.success) {
+            if (tapData.success && tapData.uid) {
                 clearInterval(checkInterval);
-                statusEl.textContent = `Success! Card (${tapData.uid}) successfully linked to your student record.`;
+                statusEl.textContent = `Success! Card UID (${tapData.uid}) linked to ${studentNo}.`;
                 btnEl.textContent = "Registration Complete!";
-                setTimeout(() => closeRegistrationModal(), 3500);
+                setTimeout(() => closeRegistrationModal(), 3000);
             }
         })
         .catch(() => {});
@@ -127,21 +132,11 @@ function submitStaffLogin() {
                 localStorage.setItem('isAdminAuthenticated', 'true');
                 window.location.href = 'admin.html';
             } else {
-                alert('Invalid username or password.');
+                alert('Invalid administrator credentials.');
             }
         })
         .catch(() => {
-            // Check against stored custom credentials or fall back to defaults
-            const savedUser = localStorage.getItem('adminUsername') || 'admin';
-            const savedPass = localStorage.getItem('adminPassword') || '1234';
-            const savedHash = localStorage.getItem('adminPasswordHash');
-
-            if (username === savedUser && (password === savedPass || hashedPassword === savedHash || (savedUser === 'admin' && password === '1234'))) {
-                localStorage.setItem('isAdminAuthenticated', 'true');
-                window.location.href = 'admin.html';
-            } else {
-                alert('Authentication failed.');
-            }
+            alert('Unable to authenticate with ESP32 server.');
         });
     });
 }

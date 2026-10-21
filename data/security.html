@@ -8,10 +8,10 @@
 </head>
 <body>
     <div id="alert-modal" class="modal-overlay hidden">
-        <div class="modal-box" style="text-align: center;">
-            <div class="feature-icon" style="margin: 0 auto 1.25rem auto;">✓</div>
+        <div class="modal-box modal-alert-box">
+            <div class="feature-icon icon-margin">✓</div>
             <h3 id="alert-title" class="card-title">Notice</h3>
-            <p id="alert-message" class="card-desc" style="margin-bottom: 1.75rem;">Credentials updated successfully.</p>
+            <p id="alert-message" class="card-desc mb-3">Credentials updated successfully.</p>
             <button onclick="closeAlertModal()" class="kiosk-btn">Okay</button>
         </div>
     </div>
@@ -27,36 +27,36 @@
             </nav>
 
             <div class="header-right-group">
-                <a href="admin.html" class="kiosk-btn-outline" style="padding: 0.45rem 0.9rem; font-size: 0.7rem;">← Control Center</a>
-                <button onclick="toggleTheme()" class="kiosk-btn-outline" style="padding: 0.45rem 0.9rem; font-size: 0.7rem;" id="theme-toggle-btn">☀️ Light</button>
+                <a href="admin.html" class="kiosk-btn-outline btn-theme">← Control Center</a>
+                <button onclick="toggleTheme()" class="kiosk-btn-outline btn-theme" id="theme-toggle-btn">☀️ Light</button>
             </div>
         </div>
     </header>
 
     <main class="container page-wrapper" style="max-width: 650px;">
-        <div class="kiosk-card hero-card" style="margin-bottom: 2rem; padding: 2rem;">
+        <div class="kiosk-card hero-card">
             <span class="hero-tag">System Security</span>
-            <h2 class="section-title" style="font-size: 1.6rem; margin-top: 0.5rem;">Admin Account Credentials</h2>
-            <p class="card-desc">Update your admin username and secure password. Passwords are encrypted using strong cryptographic hashing before being saved on the microcontroller.</p>
+            <h2 class="section-title mt-2">Admin Account Credentials</h2>
+            <p class="card-desc">Update your admin username and secure password. Passwords are encrypted using SHA-256 cryptographic hashing before being stored on the ESP32 microcontroller.</p>
         </div>
 
         <div class="kiosk-card modal-body-stack">
-            <h3 class="card-title modal-header" style="margin-bottom: 0;">Change Admin Credentials</h3>
+            <h3 class="card-title modal-header mb-0">Change Admin Credentials</h3>
             <div>
                 <label class="card-desc">Current Admin Password</label>
-                <input type="password" id="current-pass" placeholder="Enter current password" class="kiosk-input" style="margin-top: 0.4rem;">
+                <input type="password" id="current-pass" placeholder="Enter current password" class="kiosk-input mt-1">
             </div>
             <div>
                 <label class="card-desc">New Admin Username</label>
-                <input type="text" id="new-admin-user" placeholder="e.g., admin_kiosk" class="kiosk-input" style="margin-top: 0.4rem;">
+                <input type="text" id="new-admin-user" placeholder="e.g., admin_kiosk" class="kiosk-input mt-1">
             </div>
             <div>
                 <label class="card-desc">New Secure Password (Min. 8 characters, letters & numbers)</label>
-                <input type="password" id="new-admin-pass" placeholder="Enter strong password" class="kiosk-input" oninput="validatePasswordStrength(this.value)" style="margin-top: 0.4rem;">
-                <p id="password-strength-text" class="card-desc" style="margin-top: 0.4rem; font-size: 0.8rem; color: #94a3b8;">Strength: Enter at least 8 characters with numbers and letters</p>
+                <input type="password" id="new-admin-pass" placeholder="Enter strong password" class="kiosk-input mt-1" oninput="validatePasswordStrength(this.value)">
+                <p id="password-strength-text" class="card-desc mt-1">Strength: Enter at least 8 characters with numbers and letters</p>
             </div>
-            <button onclick="updateEncryptedCredentials()" class="kiosk-btn" style="width: 100%; margin-top: 0.75rem;">Save & Hash Credentials Securely</button>
-            <a href="admin.html" style="text-align: center; margin-top: 0.75rem; display: block; color: var(--accent-cyan); font-size: 0.85rem; text-decoration: none; font-weight: 600;">← Back to Admin Portal</a>
+            <button onclick="updateEncryptedCredentials()" class="kiosk-btn w-full mt-3">Save & Hash Credentials Securely</button>
+            <a href="admin.html" class="nav-pill-link btn-nav-portal text-center mt-3">← Back to Admin Portal</a>
         </div>
     </main>
 
