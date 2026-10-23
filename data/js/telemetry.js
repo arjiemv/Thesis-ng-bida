@@ -1,6 +1,5 @@
 /**
  * PUP Hydration Station — Public Telemetry & Status Monitor
- * Automatically polls kiosk telemetry and updates UI indicators based on online state.
  */
 
 async function fetchTelemetry() {
@@ -10,26 +9,24 @@ async function fetchTelemetry() {
 
         const data = await response.json();
 
-        // Get Header & System Status Elements
+        // Get DOM Elements
         const espStatusElem = document.getElementById('esp-status-text');
         const systemStatusElem = document.getElementById('system-status-text');
-
-        // Advisory Card Elements
-        const advisoryBadgeElem = document.getElementById('advisory-badge');
-        const advisoryMessageElem = document.getElementById('advisory-message');
-
-        // Core Metric Value Elements
         const waterTempElem = document.getElementById('water-temp');
         const batteryElem = document.getElementById('battery-percent');
         const waterLevelElem = document.getElementById('water-level');
 
-        // Sustainability & Counter Elements
+        // Advisory Banner Elements
+        const advisoryBadgeElem = document.getElementById('advisory-badge');
+        const advisoryMessageElem = document.getElementById('advisory-message');
+
+        // Eco & Impact Elements
         const ecoLitersElem = document.getElementById('eco-liters-val');
         const ecoTapsElem = document.getElementById('eco-taps-val');
         const bottlesSavedElem = document.getElementById('bottles-saved-today');
 
         if (data.online) {
-            // --- ESP32 IS ONLINE ---
+            // --- ONLINE STATE ---
             if (espStatusElem) {
                 espStatusElem.textContent = "Connected";
                 espStatusElem.className = "text-green";
@@ -40,47 +37,38 @@ async function fetchTelemetry() {
                 systemStatusElem.className = "text-cyan";
             }
 
-            // Update Advisory Banner Text with Live Water Temperature
-            const currentTemp = (data.waterTemp !== null && data.waterTemp !== undefined) 
-                ? Number(data.waterTemp).toFixed(1) 
-                : '15.0';
+            // READ LIVE SENSOR TEMP DIRECTLY FROM BACKEND
+            if (waterTempElem && data.waterTemp !== null && data.waterTemp !== undefined) {
+                const liveTemp = Number(data.waterTemp).toFixed(1);
+                waterTempElem.textContent = `${liveTemp} °C`;
 
-            if (advisoryBadgeElem) {
-                advisoryBadgeElem.textContent = "☀️ Optimal Solar Storage";
+                if (advisoryMessageElem) {
+                    advisoryMessageElem.textContent = `Station is running on full solar power. Water is actively chilled at ${liveTemp}°C.`;
+                }
             }
 
-            if (advisoryMessageElem) {
-                advisoryMessageElem.textContent = `Station is running on full solar power. Water is actively chilled at ${currentTemp}°C.`;
-            }
+            if (advisoryBadgeElem) advisoryBadgeElem.textContent = "☀️ Optimal Solar Storage";
 
-            // Update Live Telemetry Metrics
-            if (waterTempElem) {
-                waterTempElem.textContent = `${Number(data.waterTemp || 0).toFixed(1)} °C`;
-            }
-
-            if (batteryElem) {
-                const volt = data.batteryVoltage ?? 12.5;
+            // Battery Voltage to Percentage (10.5V = 0%, 12.6V = 100%)
+            if (batteryElem && data.batteryVoltage !== null && data.batteryVoltage !== undefined) {
+                const volt = Number(data.batteryVoltage);
                 const batteryPct = Math.min(100, Math.max(0, Math.round(((volt - 10.5) / 2.1) * 100)));
                 batteryElem.textContent = `${batteryPct}%`;
             }
 
-            if (waterLevelElem) {
-                waterLevelElem.textContent = `${Number(data.waterLevel ?? 85).toFixed(0)}%`;
+            // Raw Water Reservoir Level %
+            if (waterLevelElem && data.waterLevel !== null && data.waterLevel !== undefined) {
+                waterLevelElem.textContent = `${Math.round(Number(data.waterLevel))}%`;
             }
 
-            // Update Eco & Impact Counters
+            // Eco Metrics
             const totalLiters = Number(data.totalLiters || 0);
             if (ecoLitersElem) ecoLitersElem.textContent = `${totalLiters.toFixed(1)} L`;
-            
-            const bottlesSaved = Math.floor((totalLiters * 1000) / 500);
-            if (bottlesSavedElem) bottlesSavedElem.textContent = bottlesSaved;
-
-            if (ecoTapsElem) {
-                ecoTapsElem.textContent = data.todayTaps || 0;
-            }
+            if (bottlesSavedElem) bottlesSavedElem.textContent = Math.floor((totalLiters * 1000) / 500);
+            if (ecoTapsElem) ecoTapsElem.textContent = data.todayTaps || 0;
 
         } else {
-            // --- ESP32 IS OFFLINE ---
+            // --- OFFLINE STATE ---
             if (espStatusElem) {
                 espStatusElem.textContent = "Offline";
                 espStatusElem.className = "text-amber";
@@ -91,61 +79,23 @@ async function fetchTelemetry() {
                 systemStatusElem.className = "text-amber";
             }
 
-            if (advisoryBadgeElem) {
-                advisoryBadgeElem.textContent = "⚠️ Station Offline";
-            }
-
+            if (advisoryBadgeElem) advisoryBadgeElem.textContent = "⚠️ Station Offline";
             if (advisoryMessageElem) {
-                advisoryMessageElem.textContent = "Station hardware is currently offline. Dispensing and telemetry functions are suspended.";
+                advisoryMessageElem.textContent = "Station hardware is currently offline. Dispensing functions are suspended.";
             }
 
             if (waterTempElem) waterTempElem.textContent = "-- °C";
             if (batteryElem) batteryElem.textContent = "--%";
             if (waterLevelElem) waterLevelElem.textContent = "--%";
-            if (ecoLitersElem) ecoLitersElem.textContent = "-- L";
-            if (bottlesSavedElem) bottlesSavedElem.textContent = "0";
-            if (ecoTapsElem) ecoTapsElem.textContent = "0";
         }
 
     } catch (error) {
-        console.error("[TELEMETRY ERROR]", error);
-
-        // --- BACKEND SERVER UNREACHABLE ---
-        const espStatusElem = document.getElementById('esp-status-text');
-        const systemStatusElem = document.getElementById('system-status-text');
-        const advisoryBadgeElem = document.getElementById('advisory-badge');
-        const advisoryMessageElem = document.getElementById('advisory-message');
-
-        if (espStatusElem) {
-            espStatusElem.textContent = "Disconnected";
-            espStatusElem.className = "text-amber";
-        }
-
-        if (systemStatusElem) {
-            systemStatusElem.textContent = "Server Connection Lost";
-            systemStatusElem.className = "text-amber";
-        }
-
-        if (advisoryBadgeElem) {
-            advisoryBadgeElem.textContent = "⚠️ Network Error";
-        }
-
-        if (advisoryMessageElem) {
-            advisoryMessageElem.textContent = "Unable to connect to local server. Verify network connection.";
-        }
-
-        const waterTempElem = document.getElementById('water-temp');
-        const batteryElem = document.getElementById('battery-percent');
-        const waterLevelElem = document.getElementById('water-level');
-
-        if (waterTempElem) waterTempElem.textContent = "-- °C";
-        if (batteryElem) batteryElem.textContent = "--%";
-        if (waterLevelElem) waterLevelElem.textContent = "--%";
+        console.error("[TELEMETRY FETCH ERROR]", error);
     }
 }
 
 /**
- * Fetch recent dispensing logs for the activity table on index.html
+ * Fetch recent dispensing logs for the activity table with local timezone conversion
  */
 async function refreshLogs() {
     try {
@@ -154,7 +104,6 @@ async function refreshLogs() {
 
         const logs = await response.json();
         const tableBody = document.getElementById('logTableBody');
-
         if (!tableBody) return;
 
         if (!logs || logs.length === 0) {
@@ -163,7 +112,15 @@ async function refreshLogs() {
         }
 
         tableBody.innerHTML = logs.map(log => {
-            const formattedTime = new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            // Parse SQLite UTC timestamp into local Manila time (UTC+8)
+            const rawTime = log.timestamp.endsWith('Z') ? log.timestamp : log.timestamp.replace(' ', 'T') + 'Z';
+            const formattedTime = new Date(rawTime).toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: true 
+            });
+
             const studentLabel = log.student_number ? `Student (${log.student_number})` : 'Authorized User';
 
             return `
@@ -181,7 +138,6 @@ async function refreshLogs() {
     }
 }
 
-// Poll telemetry every 3 seconds & load recent logs
 setInterval(fetchTelemetry, 3000);
 fetchTelemetry();
 refreshLogs();

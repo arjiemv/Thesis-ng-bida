@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Log API activity
+// Log every API call
 app.use('/api', (req, res, next) => {
     console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.originalUrl} from ${req.ip}`, req.method === 'POST' ? JSON.stringify(req.body) : '');
     next();
@@ -39,6 +39,7 @@ const db = new sqlite3.Database('./database.sqlite', (err) => {
     else console.log('[DATABASE] Connected to SQLite database file.');
 });
 
+// Create SQL Tables & Auto-Migrate Missing Columns
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS students (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,10 +62,12 @@ db.serialize(() => {
         water_temp REAL NOT NULL,
         ambient_temp REAL NOT NULL,
         total_liters REAL NOT NULL,
-        battery_voltage REAL DEFAULT 12.5,
-        water_level REAL DEFAULT 85.0,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
+
+    // AUTO-MIGRATE MISSING COLUMNS WITHOUT CRASHING
+    db.run(`ALTER TABLE telemetry_logs ADD COLUMN battery_voltage REAL DEFAULT 12.5`, () => {});
+    db.run(`ALTER TABLE telemetry_logs ADD COLUMN water_level REAL DEFAULT 85.0`, () => {});
 
     db.run(`CREATE TABLE IF NOT EXISTS admin_users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -166,7 +169,7 @@ app.post('/api/telemetry', (req, res) => {
     const aTemp = ambientTemp ?? 31.0;
     const tLiters = totalLiters ?? 0.0;
     const bVolt = batteryVoltage ?? 12.5;
-    const wLevel = waterLevel ?? 85.0;
+    const wLevel = waterLevel ?? 0.0;
 
     db.run(`INSERT INTO telemetry_logs (water_temp, ambient_temp, total_liters, battery_voltage, water_level) VALUES (?, ?, ?, ?, ?)`,
         [wTemp, aTemp, tLiters, bVolt, wLevel],
@@ -177,30 +180,38 @@ app.post('/api/telemetry', (req, res) => {
     );
 });
 
-// Admin Analytics Endpoint — Fixed to guarantee live telemetry reflection
+// Admin Analytics Endpoint — Aliased column names so telemetry matches frontend expectations exactly
 app.get('/api/admin/analytics', async (req, res) => {
     const regMode = (await getSetting('registration_mode')) === 'true';
     const pendingUID = await getSetting('pending_uid');
     
-    // Consider device online if seen within last 45 seconds
     const isOnline = (Date.now() - lastDeviceSeen) < 45000;
 
-    db.get(`SELECT water_temp, ambient_temp, total_liters, battery_voltage, water_level FROM telemetry_logs ORDER BY id DESC LIMIT 1`, [], (err, telemetry) => {
-        if (err) console.error('[ANALYTICS ERROR]', err.message);
+    db.get(`SELECT water_temp AS waterTemp, 
+                   ambient_temp AS ambientTemp, 
+                   total_liters AS totalLiters, 
+                   battery_voltage AS batteryVoltage, 
+                   water_level AS waterLevel 
+            FROM telemetry_logs 
+            ORDER BY id DESC LIMIT 1`, [], (err, telemetry) => {
+        
+        if (err) {
+            console.error('[ANALYTICS ERROR]', err.message);
+            return res.status(500).json({ error: err.message });
+        }
 
         db.get(`SELECT COUNT(*) as activeCardCount FROM students`, [], (err, countRow) => {
             db.get(`SELECT COUNT(*) as todayTaps FROM dispensing_logs WHERE timestamp >= datetime('now', 'start of day')`, [], (err, tapRow) => {
 
                 res.json({
                     online: isOnline,
-                    waterTemp: telemetry ? telemetry.water_temp : 15.0,
-                    ambientTemp: telemetry ? telemetry.ambient_temp : 30.5,
-                    totalLiters: telemetry ? telemetry.total_liters : 0.0,
-                    batteryVoltage: telemetry ? telemetry.battery_voltage : 12.5,
-                    waterLevel: telemetry ? telemetry.water_level : 85.0,
+                    waterTemp: telemetry ? telemetry.waterTemp : null,
+                    ambientTemp: telemetry ? telemetry.ambientTemp : null,
+                    totalLiters: telemetry ? telemetry.totalLiters : 0.0,
+                    batteryVoltage: telemetry ? telemetry.batteryVoltage : 12.5,
+                    waterLevel: telemetry ? telemetry.waterLevel : 0.0,
                     todayTaps: tapRow ? tapRow.todayTaps : 0,
                     activeCardCount: countRow ? countRow.activeCardCount : 0,
-                    lastSeenSecondsAgo: lastDeviceSeen ? Math.round((Date.now() - lastDeviceSeen) / 1000) : null,
                     isRegistrationMode: regMode,
                     pendingScannedUID: pendingUID || null
                 });
