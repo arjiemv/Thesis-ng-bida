@@ -35,30 +35,40 @@ function fetchLiveTelemetry() {
         const ecoLitersEl = document.getElementById('eco-liters-val');
         const ecoTapsEl = document.getElementById('eco-taps-val');
 
-        if (waterTempEl && data.waterTemp !== undefined) {
-            waterTempEl.textContent = data.waterTemp.toFixed(1) + " °C";
+        // -127 = DS18B20 disconnected, -1 = ultrasonic got no echo
+        const tempValid = data.waterTemp !== undefined && data.waterTemp > -100;
+        const levelValid = data.waterLevel !== undefined && data.waterLevel >= 0;
+
+        if (waterTempEl) {
+            waterTempEl.textContent = tempValid ? data.waterTemp.toFixed(1) + " °C" : "-- °C";
         }
 
-        if (batteryPercentEl) {
-            batteryPercentEl.textContent = "98%";
+        if (batteryPercentEl && data.batteryVoltage !== undefined) {
+            if (data.batteryVoltage > 5) {
+                // 12V lead-acid approximation: 11.8 V = 0%, 12.8 V = 100%. Adjust for your battery.
+                const pct = Math.max(0, Math.min(100, Math.round((data.batteryVoltage - 11.8) / (12.8 - 11.8) * 100)));
+                batteryPercentEl.textContent = pct + "%";
+            } else {
+                batteryPercentEl.textContent = "--";
+            }
         }
 
         if (solarStatusEl) {
-            solarStatusEl.textContent = "☀️ Solar Active";
-            solarStatusEl.className = "status-pill status-pill-green";
+            solarStatusEl.textContent = data.online ? "☀️ Solar Active" : "Offline";
+            solarStatusEl.className = data.online ? "status-pill status-pill-green" : "status-pill status-pill-amber";
         }
 
         if (waterLevelEl) {
-            waterLevelEl.textContent = "85%";
+            waterLevelEl.textContent = levelValid ? Math.round(data.waterLevel) + "%" : "--";
         }
 
         if (valveStateEl) {
-            valveStateEl.textContent = "Ready";
+            valveStateEl.textContent = data.online ? "Ready" : "No signal";
             valveStateEl.className = "status-pill status-pill-cyan";
         }
 
         if (systemStatusEl) {
-            systemStatusEl.textContent = "Fully Operational";
+            systemStatusEl.textContent = data.online ? "Fully Operational" : "Kiosk Offline (no data from ESP32)";
         }
 
         if (data.totalLiters !== undefined) {
@@ -69,7 +79,7 @@ function fetchLiveTelemetry() {
             if (ecoTapsEl) ecoTapsEl.textContent = (data.activeCardCount || calculatedBottles).toLocaleString();
         }
 
-        updateSolarAdvisory(data.waterTemp);
+        updateSolarAdvisory(tempValid ? data.waterTemp : undefined);
     })
     .catch(() => {
         const systemStatusEl = document.getElementById('system-status-text');
@@ -87,7 +97,7 @@ function anonymizeStudentNumber(studentNumber) {
 }
 
 function refreshLogs() {
-    fetch('/api/rfid/list')
+    fetch('/api/logs/recent')
     .then(res => res.json())
     .then(students => {
         const tbody = document.getElementById('logTableBody');
@@ -100,13 +110,14 @@ function refreshLogs() {
         }
 
         students.forEach(s => {
-            const timeStr = s.created_at ? new Date(s.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
-            const anonUser = anonymizeStudentNumber(s.student_number);
+            // SQLite CURRENT_TIMESTAMP is UTC without a "Z" - add it so the browser shows local time
+            const timeStr = s.timestamp ? new Date(s.timestamp.replace(' ', 'T') + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
+            const anonUser = anonymizeStudentNumber(s.student_number || 'Unknown');
             tbody.innerHTML += `
                 <tr>
                     <td>${timeStr}</td>
                     <td><span class="badge-anon">${anonUser}</span></td>
-                    <td>500 mL</td>
+                    <td>${s.volume_ml} mL</td>
                     <td><span class="status-pill status-pill-green">Completed</span></td>
                 </tr>`;
         });
