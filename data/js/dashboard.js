@@ -23,6 +23,12 @@ function closeRegistrationModal() {
         actionBtn.textContent = "Verify School Database";
         actionBtn.disabled = false;
     }
+
+    fetch('/api/admin/toggle-registration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enable: false })
+    }).catch(() => {});
 }
 
 function openStaffLoginModal() {
@@ -32,11 +38,7 @@ function openStaffLoginModal() {
     }
 
     const modal = document.getElementById('staff-login-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-    } else {
-        window.location.href = 'dashboard.html';
-    }
+    if (modal) modal.classList.remove('hidden');
 }
 
 function closeStaffLoginModal() {
@@ -61,29 +63,18 @@ function verifyAndRegisterCard() {
     const btnEl = document.getElementById('reg-action-btn');
     
     statusEl.classList.remove('hidden');
-    statusEl.textContent = "Verifying student records with university database...";
-    btnEl.textContent = "Checking Records...";
+    statusEl.textContent = "Enabling station registration mode... Tap card on reader now.";
+    btnEl.textContent = "Listening for Card Tap...";
     btnEl.disabled = true;
 
-    fetch('/api/student/verify', {
+    fetch('/api/admin/toggle-registration', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName: fullName, studentNo: studentNo })
+        body: JSON.stringify({ enable: true })
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'valid' || data.success === true) {
-            statusEl.textContent = `Record Verified: ${fullName}. Tap your student RFID card on the reader now...`;
-            btnEl.textContent = "Listening for RFID Tap...";
-            listenForCardTap(studentNo, fullName);
-        } else {
-            statusEl.textContent = "Verification Failed: Credentials do not match PUP school records.";
-            btnEl.textContent = "Verify School Database";
-            btnEl.disabled = false;
-        }
-    })
+    .then(() => listenForCardTap(studentNo, fullName))
     .catch(() => {
-        statusEl.textContent = "Unable to connect to verification server. Please try again.";
+        statusEl.textContent = "Unable to connect to kiosk server. Please try again.";
         btnEl.textContent = "Verify School Database";
         btnEl.disabled = false;
     });
@@ -94,18 +85,30 @@ function listenForCardTap(studentNo, fullName) {
     const btnEl = document.getElementById('reg-action-btn');
 
     const checkInterval = setInterval(() => {
-        fetch('/api/rfid/poll-tap')
+        fetch('/api/admin/analytics')
         .then(res => res.json())
-        .then(tapData => {
-            if (tapData.success && tapData.uid) {
+        .then(data => {
+            if (data.pendingScannedUID) {
                 clearInterval(checkInterval);
-                statusEl.textContent = `Success! Card UID (${tapData.uid}) linked to ${studentNo}.`;
+                statusEl.textContent = `Scanned UID: ${data.pendingScannedUID}. Saving to database...`;
+
+                return fetch('/api/admin/register-student', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studentNum: studentNo, name: fullName, uid: data.pendingScannedUID })
+                });
+            }
+        })
+        .then(res => res ? res.json() : null)
+        .then(resData => {
+            if (resData && resData.status === 'SUCCESS') {
+                statusEl.textContent = `Success! Card registered for ${fullName}.`;
                 btnEl.textContent = "Registration Complete!";
-                setTimeout(() => closeRegistrationModal(), 3000);
+                setTimeout(() => closeRegistrationModal(), 2500);
             }
         })
         .catch(() => {});
-    }, 1000);
+    }, 1500);
 }
 
 function submitStaffLogin() {
@@ -132,12 +135,10 @@ function submitStaffLogin() {
                 localStorage.setItem('isAdminAuthenticated', 'true');
                 window.location.href = 'admin.html';
             } else {
-                alert('Invalid administrator credentials.');
+                alert(data.message || 'Invalid administrator credentials.');
             }
         })
-        .catch(() => {
-            alert('Unable to authenticate with ESP32 server.');
-        });
+        .catch(() => alert('Unable to authenticate with backend server.'));
     });
 }
 
@@ -146,7 +147,7 @@ function toggleTheme() {
     const isLight = document.body.classList.contains('light-mode');
     localStorage.setItem('theme', isLight ? 'light' : 'dark');
     const btn = document.getElementById('theme-toggle-btn');
-    if (btn) btn.textContent = isLight ? '🌙 Dark' : '☀️ Light';
+    if (btn) btn.textContent = isLight ? '🌙 Dark' : '☀️ Light Mode';
 }
 
 window.addEventListener('DOMContentLoaded', () => {

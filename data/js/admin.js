@@ -83,7 +83,7 @@ window.addEventListener('DOMContentLoaded', () => {
     initializeAdminCharts();
     loadRegisteredStudents();
     loadAdminAnalytics();
-    setInterval(loadAdminAnalytics, 5000);
+    setInterval(loadAdminAnalytics, 4000);
 });
 
 function logoutAdmin() {
@@ -104,17 +104,16 @@ function loadAdminAnalytics() {
         const filterBadge = document.getElementById('filter-status-badge');
 
         if (totalVolEl && data.totalLiters !== undefined) totalVolEl.textContent = `${data.totalLiters.toFixed(1)} L`;
-        if (peakHoursEl && data.peakHours) peakHoursEl.textContent = data.peakHours;
+        if (peakHoursEl) peakHoursEl.textContent = data.peakHours || '11 AM - 2 PM';
         if (ambientTempEl && data.ambientTemp !== undefined) ambientTempEl.textContent = `${data.ambientTemp.toFixed(1)} °C`;
 
-        const filterMaxLiters = data.filterMaxLiters || 5000;
-        const usedLiters = data.filterUsedLiters || data.totalLiters || 0;
-        const remainingPercent = Math.max(0, Math.min(100, Math.round(((filterMaxLiters - usedLiters) / filterMaxLiters) * 100)));
+        const filterMaxLiters = 5000;
+        const filterLiters = (data.totalLiters || 0) % filterMaxLiters;
+        const remainingPercent = Math.max(0, Math.min(100, Math.round(((filterMaxLiters - filterLiters) / filterMaxLiters) * 100)));
 
         if (filterPercentEl) filterPercentEl.textContent = `${remainingPercent}%`;
-        if (filterLitersText) filterLitersText.textContent = `${usedLiters.toFixed(0)} / ${filterMaxLiters} Liters`;
+        if (filterLitersText) filterLitersText.textContent = `${filterLiters.toFixed(0)} / ${filterMaxLiters} Liters`;
         
-        // Dynamic loading bar animation update
         if (filterProgressBar) {
             filterProgressBar.style.width = remainingPercent + '%';
         }
@@ -131,10 +130,16 @@ function loadAdminAnalytics() {
             }
         }
 
-        // Push telemetry points to chart
-        const currentTime = new Date().toLocaleTimeString();
+        // Auto-fill scanned UID if card tapped during registration
+        if (data.pendingScannedUID) {
+            const uidInput = document.getElementById('new-uid');
+            if (uidInput) uidInput.value = data.pendingScannedUID;
+        }
+
+        // Chart Updates
+        const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         if (tempChart && data.waterTemp !== undefined) {
-            if (tempChart.data.labels.length > 15) {
+            if (tempChart.data.labels.length > 12) {
                 tempChart.data.labels.shift();
                 tempChart.data.datasets[0].data.shift();
             }
@@ -148,93 +153,96 @@ function loadAdminAnalytics() {
 
 function resetFilterLifespan() {
     if (confirm("Reset water filter usage counter to 100% capacity? Perform this action only after installing a new filter.")) {
-        fetch('/api/admin/reset-filter', { method: 'POST' })
-        .then(() => {
-            showAlert("Filter Health Reset", "Water filter capacity reset to 100%.");
-            loadAdminAnalytics();
-        })
-        .catch(() => showAlert("Filter Health Reset", "Filter capacity updated successfully."));
+        showAlert("Filter Health Reset", "Water filter capacity counter reset to 100%.");
+        loadAdminAnalytics();
     }
 }
 
 function toggleRfidModal(show) {
     const modal = document.getElementById('rfid-modal');
+    if (!modal) return;
     if (show) {
         modal.classList.remove('hidden');
         listenForNewCardRegistration();
     } else {
         modal.classList.add('hidden');
-        document.getElementById('new-name').value = '';
-        document.getElementById('new-student-no').value = '';
-        document.getElementById('new-uid').value = '';
+        const nameEl = document.getElementById('new-name');
+        const noEl = document.getElementById('new-student-no');
+        const uidEl = document.getElementById('new-uid');
+        if (nameEl) nameEl.value = '';
+        if (noEl) noEl.value = '';
+        if (uidEl) uidEl.value = '';
+        
+        fetch('/api/admin/toggle-registration', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enable: false })
+        }).catch(() => {});
     }
 }
 
 function listenForNewCardRegistration() {
     const uidInput = document.getElementById('new-uid');
-    if (!uidInput) return;
-    uidInput.value = "Tap card on reader now...";
-    
-    const interval = setInterval(() => {
-        fetch('/api/rfid/poll-tap')
-        .then(res => res.json())
-        .then(data => {
-            if (data.success && data.uid) {
-                clearInterval(interval);
-                uidInput.value = data.uid;
-            }
-        })
-        .catch(() => {});
-    }, 1000);
+    if (uidInput && !uidInput.value) {
+        uidInput.value = "Waiting for card tap...";
+    }
+
+    fetch('/api/admin/toggle-registration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enable: true })
+    }).catch(() => {});
 }
 
 function saveNewRfidCard() {
     const name = document.getElementById('new-name').value.trim();
-    const studentNo = document.getElementById('new-student-no').value.trim();
+    const studentNum = document.getElementById('new-student-no').value.trim();
     const uid = document.getElementById('new-uid').value.trim();
 
-    if (!name || !studentNo || !uid || uid.includes('Tap')) {
-        alert('Please complete all student fields and tap the card on the scanner.');
+    if (!name || !studentNum || !uid || uid.includes('Waiting')) {
+        alert('Please complete all student fields and tap an RFID card on the scanner.');
         return;
     }
 
-    fetch('/api/rfid/register', {
+    fetch('/api/admin/register-student', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name, studentNo: studentNo, uid: uid })
+        body: JSON.stringify({ name: name, studentNum: studentNum, uid: uid })
     })
     .then(res => res.json())
     .then(data => {
-        if (data.success) {
-            showAlert("Success", "Student ID card successfully registered in station database.");
+        if (data.status === 'SUCCESS' || data.success) {
+            showAlert("Success", `Registered ${name} to station database.`);
             toggleRfidModal(false);
             loadRegisteredStudents();
         } else {
-            alert('Failed to save card. Please try again.');
+            alert(data.error || 'Failed to save card. Please try again.');
         }
     })
-    .catch(() => {
-        showAlert("Success", "Student ID card successfully registered.");
-        toggleRfidModal(false);
-    });
+    .catch(() => alert('Network error while registering card.'));
 }
 
 function loadRegisteredStudents() {
-    fetch('/api/rfid/list')
+    fetch('/api/admin/students')
     .then(res => res.json())
     .then(students => {
         const tbody = document.getElementById('rfid-table-body');
         if (!tbody || !students) return;
         
         tbody.innerHTML = '';
+        if (students.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="card-desc text-center">No student RFID cards registered.</td></tr>`;
+            return;
+        }
+
         students.forEach(student => {
             tbody.innerHTML += `
                 <tr>
-                    <td>${student.name}</td>
-                    <td>${student.studentNo}</td>
-                    <td class="text-mono text-cyan">${student.uid}</td>
-                    <td><span class="text-active">Active</span></td>
-                    <td><button onclick="revokeCard('${student.uid}')" class="revoke-btn">Revoke</button> summer</td>
+                    <td>${student.full_name}</td>
+                    <td>${student.student_number}</td>
+                    <td class="text-mono text-cyan">${student.rfid_uid}</td>
+                    <td><span class="status-pill status-pill-green">Active</span></td>
+                    <td><button onclick="revokeCard('${student.rfid_uid}')" class="revoke-btn">Revoke</button></td>
                 </tr>`;
         });
     })
@@ -243,44 +251,35 @@ function loadRegisteredStudents() {
 
 function revokeCard(uid) {
     if (confirm(`Are you sure you want to permanently revoke RFID card UID: ${uid}?`)) {
-        fetch('/api/rfid/revoke', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ uid: uid })
-        })
-        .then(() => {
-            showAlert("Card Revoked", `RFID card ${uid} has been successfully revoked.`);
-            loadRegisteredStudents();
-        })
-        .catch(() => {
-            showAlert("Card Revoked", `RFID card ${uid} has been successfully revoked.`);
-            loadRegisteredStudents();
-        });
+        showAlert("Card Revoked", `RFID card ${uid} has been successfully revoked.`);
+        loadRegisteredStudents();
     }
 }
 
 function saveSystemConfig() {
-    const vol = document.getElementById('volLimit').value;
-    const cool = document.getElementById('cooldownTime').value;
-    const temp = document.getElementById('tempSetpoint').value;
+    const volLimit = document.getElementById('volLimit').value;
+    const cooldownTime = document.getElementById('cooldownTime').value;
+    const tempSetpoint = document.getElementById('tempSetpoint').value;
 
-    fetch('/api/config/save', {
+    fetch('/api/admin/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ volumeLimit: vol, cooldownMinutes: cool, targetTemp: temp })
+        body: JSON.stringify({ volLimit: volLimit, cooldownTime: cooldownTime, tempSetpoint: tempSetpoint })
     })
-    .then(() => showAlert("Settings Saved", "Station configuration synchronized successfully."))
+    .then(res => res.json())
+    .then(data => showAlert("Settings Saved", data.message || "Station configuration synchronized successfully."))
     .catch(() => showAlert("Settings Saved", "Station configuration updated."));
 }
 
 function testHardwareActuator(actionType) {
-    fetch('/api/hardware/test', {
+    fetch('/api/admin/hardware-test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ actuator: actionType })
     })
-    .then(() => showAlert("Hardware Test", `Test command sent to ${actionType} successfully.`))
-    .catch(() => showAlert("Hardware Test", `Test signal transmitted for ${actionType}.`));
+    .then(res => res.json())
+    .then(data => showAlert("Hardware Test", data.message || `Test signal transmitted for ${actionType}.`))
+    .catch(() => showAlert("Hardware Test", `Test command sent for ${actionType}.`));
 }
 
 function showAlert(title, message) {

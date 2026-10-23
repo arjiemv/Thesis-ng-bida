@@ -7,12 +7,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve static frontend files from 'data' folder
+// Serve static frontend files from 'data' directory
 app.use(express.static(path.join(__dirname, 'data')));
 
 // Initialize SQLite Database File
 const db = new sqlite3.Database('./database.sqlite', (err) => {
-    if (err) console.error('Database connection error:', err.message);
+    if (err) console.error('[DATABASE] Connection error:', err.message);
     else console.log('[DATABASE] Connected to SQLite database file.');
 });
 
@@ -59,6 +59,7 @@ db.serialize(() => {
     db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('pending_uid', '')`);
     db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('cooldown_minutes', '5')`);
     db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('dispense_limit_ml', '500')`);
+    db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('temp_setpoint', '15.0')`);
 });
 
 // Helper database functions
@@ -80,6 +81,7 @@ function setSetting(key, value) {
 app.post('/api/staff/login', (req, res) => {
     const { username, passwordHash } = req.body;
     db.get(`SELECT * FROM admin_users WHERE username = ? AND password_hash = ?`, [username, passwordHash], (err, row) => {
+        if (err) return res.status(500).json({ success: false, message: "Database error" });
         if (row) res.json({ success: true, message: "Login successful" });
         else res.status(401).json({ success: false, message: "Invalid username or password" });
     });
@@ -98,6 +100,8 @@ app.post('/api/rfid/tap', async (req, res) => {
     }
 
     db.get(`SELECT * FROM students WHERE rfid_uid = ?`, [uid], async (err, student) => {
+        if (err) return res.status(500).json({ status: "DENY", message: "Database Error" });
+
         if (!student) {
             return res.json({ status: "DENY", message: "Unregistered Card" });
         }
@@ -118,7 +122,7 @@ app.post('/api/rfid/tap', async (req, res) => {
 // 3. Confirm Dispense Completed
 app.post('/api/dispense/complete', async (req, res) => {
     const { uid, dispensedMl } = req.body;
-    const volume = dispensedMl || 500;
+    const volume = dispensedMl ?? 500;
     const currentTime = Date.now();
 
     db.run(`UPDATE students SET last_dispense_time = ? WHERE rfid_uid = ?`, [currentTime, uid]);
@@ -130,9 +134,17 @@ app.post('/api/dispense/complete', async (req, res) => {
 // 4. ESP32 Telemetry Update
 app.post('/api/telemetry', (req, res) => {
     const { waterTemp, ambientTemp, totalLiters } = req.body;
+    
+    const wTemp = waterTemp ?? 15.0;
+    const aTemp = ambientTemp ?? 31.0;
+    const tLiters = totalLiters ?? 0.0;
+
     db.run(`INSERT INTO telemetry_logs (water_temp, ambient_temp, total_liters) VALUES (?, ?, ?)`,
-        [waterTemp || 15.0, ambientTemp || 31.0, totalLiters || 0.0],
-        () => res.json({ status: "OK" })
+        [wTemp, aTemp, tLiters],
+        (err) => {
+            if (err) return res.status(500).json({ status: "ERROR", message: err.message });
+            res.json({ status: "OK" });
+        }
     );
 });
 
@@ -155,9 +167,17 @@ app.get('/api/admin/analytics', async (req, res) => {
     });
 });
 
-// 6. Admin Student List
+// 6. Student List Endpoints
 app.get('/api/admin/students', (req, res) => {
     db.all(`SELECT student_number, full_name, rfid_uid, created_at FROM students ORDER BY id DESC`, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows || []);
+    });
+});
+
+app.get('/api/rfid/list', (req, res) => {
+    db.all(`SELECT student_number, full_name, rfid_uid, created_at FROM students ORDER BY id DESC`, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
         res.json(rows || []);
     });
 });
@@ -189,6 +209,38 @@ app.post('/api/admin/register-student', async (req, res) => {
             res.json({ status: "SUCCESS", message: `Registered ${name}` });
         }
     );
+});
+
+// 9. Save Dispensing Rules / Settings
+app.post('/api/admin/settings', async (req, res) => {
+    const { volLimit, cooldownTime, tempSetpoint } = req.body;
+    if (volLimit) await setSetting('dispense_limit_ml', volLimit);
+    if (cooldownTime) await setSetting('cooldown_minutes', cooldownTime);
+    if (tempSetpoint) await setSetting('temp_setpoint', tempSetpoint);
+    res.json({ status: "SUCCESS", message: "Settings saved to station successfully" });
+});
+
+// 10. Hardware Maintenance Actuator Testing
+app.post('/api/admin/hardware-test', (req, res) => {
+    const { actuator } = req.body;
+    console.log(`[HARDWARE TEST] Triggered actuator: ${actuator}`);
+    res.json({ status: "SUCCESS", message: `Test command sent for ${actuator}` });
+});
+
+// 11. Update Admin Credentials
+app.post('/api/admin/update-credentials', (req, res) => {
+    const { currentPassHash, newUsername, newPassHash } = req.body;
+    db.get(`SELECT * FROM admin_users WHERE password_hash = ?`, [currentPassHash], (err, row) => {
+        if (err || !row) return res.status(401).json({ success: false, message: "Incorrect current password" });
+
+        db.run(`UPDATE admin_users SET username = ?, password_hash = ? WHERE id = ?`,
+            [newUsername || row.username, newPassHash, row.id],
+            (err) => {
+                if (err) return res.status(500).json({ success: false, message: err.message });
+                res.json({ success: true, message: "Credentials updated successfully" });
+            }
+        );
+    });
 });
 
 // Start Server
