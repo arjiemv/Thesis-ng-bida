@@ -131,6 +131,15 @@ app.post('/api/admin/register-student', (req, res) => {
 
 // Start Server
 const PORT = 3000;
+// 9. RFID / Student List Endpoint (Fixes 404 error)
+app.get('/api/rfid/list', (req, res) => {
+    db.all(`SELECT student_number, full_name, rfid_uid, created_at FROM students ORDER BY id DESC`, [], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows || []);
+    });
+});
 app.listen(PORT, () => {
     console.log(`[SERVER RUNNING] Kiosk Backend active at http://localhost:${PORT}`);
 });
