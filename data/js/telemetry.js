@@ -10,19 +10,22 @@ async function fetchTelemetry() {
 
         const data = await response.json();
 
-        // Get DOM Elements
+        // Get Header & System Status Elements
         const espStatusElem = document.getElementById('esp-status-text');
         const systemStatusElem = document.getElementById('system-status-text');
-        const waterTempElem = document.getElementById('water-temp');
-        const batteryElem = document.getElementById('battery-percent');
-        const waterLevelElem = document.getElementById('water-level');
 
         // Advisory Card Elements
         const advisoryBadgeElem = document.getElementById('advisory-badge');
         const advisoryMessageElem = document.getElementById('advisory-message');
 
+        // Core Metric Value Elements
+        const waterTempElem = document.getElementById('water-temp');
+        const batteryElem = document.getElementById('battery-percent');
+        const waterLevelElem = document.getElementById('water-level');
+
         // Sustainability & Counter Elements
         const ecoLitersElem = document.getElementById('eco-liters-val');
+        const ecoTapsElem = document.getElementById('eco-taps-val');
         const bottlesSavedElem = document.getElementById('bottles-saved-today');
 
         if (data.online) {
@@ -37,8 +40,8 @@ async function fetchTelemetry() {
                 systemStatusElem.className = "text-cyan";
             }
 
-            // Dynamically update the advisory message with real temperature
-            const tempVal = (data.waterTemp !== null && data.waterTemp !== undefined) 
+            // Update Advisory Banner Text with Live Water Temperature
+            const currentTemp = (data.waterTemp !== null && data.waterTemp !== undefined) 
                 ? Number(data.waterTemp).toFixed(1) 
                 : '15.0';
 
@@ -47,10 +50,10 @@ async function fetchTelemetry() {
             }
 
             if (advisoryMessageElem) {
-                advisoryMessageElem.textContent = `Station is running on full solar power. Water is actively chilled at ${tempVal}°C.`;
+                advisoryMessageElem.textContent = `Station is running on full solar power. Water is actively chilled at ${currentTemp}°C.`;
             }
 
-            // Update live measurements from hardware
+            // Update Live Telemetry Metrics
             if (waterTempElem) {
                 waterTempElem.textContent = `${Number(data.waterTemp || 0).toFixed(1)} °C`;
             }
@@ -65,10 +68,16 @@ async function fetchTelemetry() {
                 waterLevelElem.textContent = `${Number(data.waterLevel ?? 85).toFixed(0)}%`;
             }
 
-            // Environmental metrics calculation
+            // Update Eco & Impact Counters
             const totalLiters = Number(data.totalLiters || 0);
             if (ecoLitersElem) ecoLitersElem.textContent = `${totalLiters.toFixed(1)} L`;
-            if (bottlesSavedElem) bottlesSavedElem.textContent = Math.floor((totalLiters * 1000) / 500);
+            
+            const bottlesSaved = Math.floor((totalLiters * 1000) / 500);
+            if (bottlesSavedElem) bottlesSavedElem.textContent = bottlesSaved;
+
+            if (ecoTapsElem) {
+                ecoTapsElem.textContent = data.todayTaps || 0;
+            }
 
         } else {
             // --- ESP32 IS OFFLINE ---
@@ -82,27 +91,26 @@ async function fetchTelemetry() {
                 systemStatusElem.className = "text-amber";
             }
 
-            // Change advisory card to offline notice
             if (advisoryBadgeElem) {
                 advisoryBadgeElem.textContent = "⚠️ Station Offline";
             }
 
             if (advisoryMessageElem) {
-                advisoryMessageElem.textContent = "Station hardware is currently disconnected. Dispensing functions are suspended.";
+                advisoryMessageElem.textContent = "Station hardware is currently offline. Dispensing and telemetry functions are suspended.";
             }
 
-            // Set default placeholders when offline
             if (waterTempElem) waterTempElem.textContent = "-- °C";
             if (batteryElem) batteryElem.textContent = "--%";
             if (waterLevelElem) waterLevelElem.textContent = "--%";
             if (ecoLitersElem) ecoLitersElem.textContent = "-- L";
-            if (bottlesSavedElem) bottlesSavedElem.textContent = "--";
+            if (bottlesSavedElem) bottlesSavedElem.textContent = "0";
+            if (ecoTapsElem) ecoTapsElem.textContent = "0";
         }
 
     } catch (error) {
         console.error("[TELEMETRY ERROR]", error);
 
-        // --- BACKEND SERVER OR NETWORK DISCONNECTED ---
+        // --- BACKEND SERVER UNREACHABLE ---
         const espStatusElem = document.getElementById('esp-status-text');
         const systemStatusElem = document.getElementById('system-status-text');
         const advisoryBadgeElem = document.getElementById('advisory-badge');
@@ -119,14 +127,13 @@ async function fetchTelemetry() {
         }
 
         if (advisoryBadgeElem) {
-            advisoryBadgeElem.textContent = "⚠️ Network Disconnected";
+            advisoryBadgeElem.textContent = "⚠️ Network Error";
         }
 
         if (advisoryMessageElem) {
-            advisoryMessageElem.textContent = "Unable to reach station server. Please check local network connection.";
+            advisoryMessageElem.textContent = "Unable to connect to local server. Verify network connection.";
         }
 
-        // Set placeholders
         const waterTempElem = document.getElementById('water-temp');
         const batteryElem = document.getElementById('battery-percent');
         const waterLevelElem = document.getElementById('water-level');
