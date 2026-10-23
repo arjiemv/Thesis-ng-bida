@@ -17,6 +17,10 @@ async function fetchTelemetry() {
         const batteryElem = document.getElementById('battery-percent');
         const waterLevelElem = document.getElementById('water-level');
 
+        // Advisory Card Elements
+        const advisoryBadgeElem = document.getElementById('advisory-badge');
+        const advisoryMessageElem = document.getElementById('advisory-message');
+
         // Sustainability & Counter Elements
         const ecoLitersElem = document.getElementById('eco-liters-val');
         const bottlesSavedElem = document.getElementById('bottles-saved-today');
@@ -33,13 +37,25 @@ async function fetchTelemetry() {
                 systemStatusElem.className = "text-cyan";
             }
 
+            // Dynamically update the advisory message with real temperature
+            const tempVal = (data.waterTemp !== null && data.waterTemp !== undefined) 
+                ? Number(data.waterTemp).toFixed(1) 
+                : '15.0';
+
+            if (advisoryBadgeElem) {
+                advisoryBadgeElem.textContent = "☀️ Optimal Solar Storage";
+            }
+
+            if (advisoryMessageElem) {
+                advisoryMessageElem.textContent = `Station is running on full solar power. Water is actively chilled at ${tempVal}°C.`;
+            }
+
             // Update live measurements from hardware
             if (waterTempElem) {
-                waterTempElem.textContent = `${Number(data.waterTemp).toFixed(1)} °C`;
+                waterTempElem.textContent = `${Number(data.waterTemp || 0).toFixed(1)} °C`;
             }
 
             if (batteryElem) {
-                // Convert battery voltage (e.g., 12.6V nominal max) into percentage
                 const volt = data.batteryVoltage ?? 12.5;
                 const batteryPct = Math.min(100, Math.max(0, Math.round(((volt - 10.5) / 2.1) * 100)));
                 batteryElem.textContent = `${batteryPct}%`;
@@ -66,6 +82,15 @@ async function fetchTelemetry() {
                 systemStatusElem.className = "text-amber";
             }
 
+            // Change advisory card to offline notice
+            if (advisoryBadgeElem) {
+                advisoryBadgeElem.textContent = "⚠️ Station Offline";
+            }
+
+            if (advisoryMessageElem) {
+                advisoryMessageElem.textContent = "Station hardware is currently disconnected. Dispensing functions are suspended.";
+            }
+
             // Set default placeholders when offline
             if (waterTempElem) waterTempElem.textContent = "-- °C";
             if (batteryElem) batteryElem.textContent = "--%";
@@ -80,6 +105,8 @@ async function fetchTelemetry() {
         // --- BACKEND SERVER OR NETWORK DISCONNECTED ---
         const espStatusElem = document.getElementById('esp-status-text');
         const systemStatusElem = document.getElementById('system-status-text');
+        const advisoryBadgeElem = document.getElementById('advisory-badge');
+        const advisoryMessageElem = document.getElementById('advisory-message');
 
         if (espStatusElem) {
             espStatusElem.textContent = "Disconnected";
@@ -89,6 +116,14 @@ async function fetchTelemetry() {
         if (systemStatusElem) {
             systemStatusElem.textContent = "Server Connection Lost";
             systemStatusElem.className = "text-amber";
+        }
+
+        if (advisoryBadgeElem) {
+            advisoryBadgeElem.textContent = "⚠️ Network Disconnected";
+        }
+
+        if (advisoryMessageElem) {
+            advisoryMessageElem.textContent = "Unable to reach station server. Please check local network connection.";
         }
 
         // Set placeholders
