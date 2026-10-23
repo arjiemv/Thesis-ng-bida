@@ -18,7 +18,7 @@ let lastDeviceSeen = 0;
 const REGISTRATION_TIMEOUT_MS = 2 * 60 * 1000;
 let registrationStartedAt = 0;
 
-// "0b 03:f3-06" -> "0B03F306"  (matches whatever format the ESP32 / admin typed)
+// "0b 03:f3-06" -> "0B03F306" (matches whatever format the ESP32 / admin typed)
 function normalizeUid(uid) {
     return String(uid || '').replace(/[^0-9a-fA-F]/g, '').toUpperCase();
 }
@@ -194,17 +194,18 @@ app.post('/api/telemetry', (req, res) => {
 app.get('/api/admin/analytics', async (req, res) => {
     const regMode = (await getSetting('registration_mode')) === 'true';
     const pendingUID = await getSetting('pending_uid');
+    const isOnline = (Date.now() - lastDeviceSeen) < 30000;
 
     db.get(`SELECT water_temp, ambient_temp, total_liters, battery_voltage, water_level FROM telemetry_logs ORDER BY id DESC LIMIT 1`, [], (err, telemetry) => {
         db.get(`SELECT COUNT(*) as activeCardCount FROM students`, [], (err, countRow) => {
             res.json({
-                waterTemp: telemetry ? telemetry.water_temp : 15.0,
-                ambientTemp: telemetry ? telemetry.ambient_temp : 31.0,
+                waterTemp: (isOnline && telemetry) ? telemetry.water_temp : null,
+                ambientTemp: (isOnline && telemetry) ? telemetry.ambient_temp : null,
                 totalLiters: telemetry ? telemetry.total_liters : 0.0,
-                batteryVoltage: telemetry ? telemetry.battery_voltage : 12.5,
-                waterLevel: telemetry ? telemetry.water_level : 85.0,
+                batteryVoltage: (isOnline && telemetry) ? telemetry.battery_voltage : null,
+                waterLevel: (isOnline && telemetry) ? telemetry.water_level : null,
                 activeCardCount: countRow ? countRow.activeCardCount : 0,
-                online: (Date.now() - lastDeviceSeen) < 30000,
+                online: isOnline,
                 lastSeenSecondsAgo: lastDeviceSeen ? Math.round((Date.now() - lastDeviceSeen) / 1000) : null,
                 isRegistrationMode: regMode,
                 pendingScannedUID: pendingUID || null
